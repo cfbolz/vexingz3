@@ -19,6 +19,12 @@ dependencies = [
 test = [
     "pytest>=7.0.0",
 ]
+dev = [
+    "pre-commit>=3.0.0",
+    "black>=24.0.0",
+    "isort>=5.0.0",
+    "flake8>=7.0.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["vexingz3/test"]

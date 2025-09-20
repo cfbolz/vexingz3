@@ -5,19 +5,19 @@ class State:
     def __init__(self, registers=None):
         self.registers = registers or {}
         self.temps = {}
-    
+
     def get_register(self, reg_name):
         return self.registers.get(reg_name, 0)
-    
+
     def set_register(self, reg_name, value):
         self.registers[reg_name] = value
-    
+
     def get_temp(self, temp_name):
         return self.temps.get(temp_name, 0)
-    
+
     def set_temp(self, temp_name, value):
         self.temps[temp_name] = value
-    
+
     def interpret(self, irsb):
         for stmt in irsb.statements:
             if isinstance(stmt, pyvex.stmt.IMark):
@@ -35,26 +35,26 @@ class State:
                 if reg_name:
                     # Check if this is a sub-register operation
                     data_type = stmt.data.result_type(irsb.tyenv)
-                    if data_type == 'Ity_I8':
+                    if data_type == "Ity_I8":
                         # 8-bit operation: splice into existing register
                         current_value = self.get_register(reg_name)
                         # Clear low 8 bits and set new value
                         new_value = (current_value & ~0xFF) | (value & 0xFF)
                         self.set_register(reg_name, new_value)
-                    elif data_type == 'Ity_I16':
+                    elif data_type == "Ity_I16":
                         # 16-bit operation: splice into existing register
                         current_value = self.get_register(reg_name)
                         # Clear low 16 bits and set new value
                         new_value = (current_value & ~0xFFFF) | (value & 0xFFFF)
                         self.set_register(reg_name, new_value)
-                    elif data_type == 'Ity_I32':
+                    elif data_type == "Ity_I32":
                         # 32-bit operation in x86-64: zero upper 32 bits
                         # This is a special case for x86-64 architecture
                         self.set_register(reg_name, value & 0xFFFFFFFF)
                     else:
                         # Full register operation
                         self.set_register(reg_name, value)
-    
+
     def _eval_expression(self, expr, arch):
         if isinstance(expr, pyvex.expr.Get):
             # GET:I64(rax) or GET:I8(offset=16) for al
@@ -62,13 +62,13 @@ class State:
             if reg_name:
                 reg_value = self.get_register(reg_name)
                 # Extract bits based on type
-                if expr.ty == 'Ity_I8':
+                if expr.ty == "Ity_I8":
                     return self._mask(reg_value, 8)
-                elif expr.ty == 'Ity_I16':
+                elif expr.ty == "Ity_I16":
                     return self._mask(reg_value, 16)
-                elif expr.ty == 'Ity_I32':
+                elif expr.ty == "Ity_I32":
                     return self._mask(reg_value, 32)
-                elif expr.ty == 'Ity_I64':
+                elif expr.ty == "Ity_I64":
                     return self._mask(reg_value, 64)
                 else:
                     return reg_value
@@ -80,48 +80,50 @@ class State:
         elif isinstance(expr, pyvex.expr.Binop):
             left = self._eval_expression(expr.args[0], arch)
             right = self._eval_expression(expr.args[1], arch)
-            return getattr(self, f"_binop_{expr.op}", self._default_binop)(expr, left, right)
+            return getattr(self, f"_binop_{expr.op}", self._default_binop)(
+                expr, left, right
+            )
         elif isinstance(expr, pyvex.expr.Unop):
             arg = self._eval_expression(expr.args[0], arch)
             return getattr(self, f"_unop_{expr.op}", self._default_unop)(expr, arg)
         elif isinstance(expr, pyvex.expr.Const):
             return expr.con.value
-        
+
         return 0
-    
+
     def _mask(self, value, bitwidth):
         return value & ((1 << bitwidth) - 1)
-    
+
     def _binop_Iop_Add64(self, expr, left, right):
         return self._mask(left + right, 64)
-    
+
     def _binop_Iop_Sub64(self, expr, left, right):
         return self._mask(left - right, 64)
-    
+
     def _binop_Iop_Add8(self, expr, left, right):
         return self._mask(left + right, 8)
-    
+
     def _binop_Iop_Add16(self, expr, left, right):
         return self._mask(left + right, 16)
-    
+
     def _binop_Iop_Add32(self, expr, left, right):
         return self._mask(left + right, 32)
-    
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
-    
+
     def _unop_Iop_64to32(self, expr, arg):
         return self._mask(arg, 32)
-    
+
     def _unop_Iop_32Uto64(self, expr, arg):
         return self._mask(arg, 32)  # zero-extend to 64 bits (already done by mask)
-    
+
     def _unop_Iop_16Uto64(self, expr, arg):
         return self._mask(arg, 16)  # zero-extend to 64 bits (already done by mask)
-    
+
     def _unop_Iop_8Uto64(self, expr, arg):
-        return self._mask(arg, 8)   # zero-extend to 64 bits (already done by mask)
-    
+        return self._mask(arg, 8)  # zero-extend to 64 bits (already done by mask)
+
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")
 

@@ -20,6 +20,17 @@ VexingZ3 provides an interpreter for VEX intermediate representation, allowing a
 pip install -r requirements.txt
 ```
 
+## Development
+
+Install development dependencies and set up pre-commit hooks:
+
+```bash
+pip install -e ".[dev]"
+pre-commit install
+```
+
+This will automatically run black, isort, and flake8 before each commit.
+
 ## Usage
 
 ```python
