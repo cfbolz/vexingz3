@@ -84,6 +84,15 @@ class State:
     def _mask(self, value, bitwidth):
         return value & ((1 << bitwidth) - 1)
 
+    def _to_signed(self, value, bitwidth):
+        """Convert unsigned value to signed based on bit width."""
+        sign_bit = 1 << (bitwidth - 1)
+        return value if value < sign_bit else value - (1 << bitwidth)
+
+    def _from_signed(self, value, bitwidth):
+        """Convert signed value to unsigned representation based on bit width."""
+        return value if value >= 0 else value + (1 << bitwidth)
+
     def _binop_Iop_Add64(self, expr, left, right):
         return self._mask(left + right, 64)
 
@@ -174,6 +183,40 @@ class State:
         right_32 = self._mask(right, 32)
         return left_32 * right_32  # No need to mask, result fits in 64 bits
 
+    def _binop_Iop_MullS8(self, expr, left, right):
+        # Signed multiply: 8-bit * 8-bit -> 16-bit result
+        left_signed = self._to_signed(left, 8)
+        right_signed = self._to_signed(right, 8)
+        result = left_signed * right_signed
+        return self._from_signed(result, 16)
+
+    def _binop_Iop_MullS16(self, expr, left, right):
+        # Signed multiply: 16-bit * 16-bit -> 32-bit result
+        left_signed = self._to_signed(left, 16)
+        right_signed = self._to_signed(right, 16)
+        result = left_signed * right_signed
+        return self._from_signed(result, 32)
+
+    def _binop_Iop_MullS32(self, expr, left, right):
+        # Signed multiply: 32-bit * 32-bit -> 64-bit result
+        left_signed = self._to_signed(left, 32)
+        right_signed = self._to_signed(right, 32)
+        result = left_signed * right_signed
+        return self._from_signed(result, 64)
+
+    def _binop_Iop_MullU64(self, expr, left, right):
+        # Unsigned multiply: 64-bit * 64-bit -> 128-bit result
+        left_64 = self._mask(left, 64)
+        right_64 = self._mask(right, 64)
+        return left_64 * right_64  # No need to mask, Python handles arbitrary precision
+
+    def _binop_Iop_MullS64(self, expr, left, right):
+        # Signed multiply: 64-bit * 64-bit -> 128-bit result
+        left_signed = self._to_signed(left, 64)
+        right_signed = self._to_signed(right, 64)
+        result = left_signed * right_signed
+        return self._from_signed(result, 128)
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
 
@@ -197,6 +240,12 @@ class State:
 
     def _unop_Iop_32to16(self, expr, arg):
         return self._mask(arg, 16)  # Extract low 16 bits
+
+    def _unop_Iop_128HIto64(self, expr, arg):
+        return self._mask(arg >> 64, 64)  # Extract high 64 bits from 128-bit value
+
+    def _unop_Iop_128to64(self, expr, arg):
+        return self._mask(arg, 64)  # Extract low 64 bits from 128-bit value
 
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")

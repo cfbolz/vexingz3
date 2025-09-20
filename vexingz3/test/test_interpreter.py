@@ -152,3 +152,51 @@ def test_mul16_ax_bx():
     expected_low = expected_result & 0xFFFF
     expected_high = (expected_result >> 16) & 0xFFFF
     check_output(output_state, rax=0x12345678ABCD0000 | expected_low, rdx=expected_high)
+
+
+def test_mul64_unsigned():
+    # mul rbx (64-bit unsigned multiply rax * rbx -> rdx:rax)
+    output_state = run("48f7e3", rax=0x123456789ABCDEF0, rbx=0x0000000000000002)
+    # Simple case: multiply by 2
+    expected_result = 0x123456789ABCDEF0 * 2
+    expected_low = expected_result & 0xFFFFFFFFFFFFFFFF
+    expected_high = (expected_result >> 64) & 0xFFFFFFFFFFFFFFFF
+    check_output(output_state, rax=expected_low, rdx=expected_high)
+
+
+def test_mul64_unsigned_overflow():
+    # mul rbx (64-bit multiply with significant upper bits)
+    output_state = run("48f7e3", rax=0xFFFFFFFFFFFFFFFF, rbx=0xFFFFFFFFFFFFFFFF)
+    # 0xFFFFFFFFFFFFFFFF * 0xFFFFFFFFFFFFFFFF = 0xFFFFFFFFFFFFFFFE0000000000000001
+    check_output(output_state, rax=0x0000000000000001, rdx=0xFFFFFFFFFFFFFFFE)
+
+
+def test_imul64_signed():
+    # imul rbx (64-bit signed multiply rax * rbx -> rdx:rax)
+    output_state = run("48f7eb", rax=0xFFFFFFFFFFFFFFFF, rbx=0x0000000000000002)
+    # -1 * 2 = -2 (0xFFFFFFFFFFFFFFFE in two's complement)
+    # In 128-bit: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE
+    check_output(output_state, rax=0xFFFFFFFFFFFFFFFE, rdx=0xFFFFFFFFFFFFFFFF)
+
+
+def test_imul8_signed():
+    # imul bl (8-bit signed multiply al * bl -> ax)
+    output_state = run("f6eb", rax=0x12345678ABCDEFFF, rbx=0x9876543210FEDC02)
+    # al=0xFF (-1), bl=0x02 (2) -> ax=0xFFFE (-2 in 16-bit two's complement)
+    check_output(output_state, rax=0x12345678ABCDFFFE, rbx=0x9876543210FEDC02)
+
+
+def test_imul16_signed():
+    # imul bx (16-bit signed multiply ax * bx -> dx:ax)
+    output_state = run("66f7eb", rax=0x12345678ABCDFFFF, rbx=0x9876543210FE0002)
+    # ax=0xFFFF (-1), bx=0x0002 (2) -> result=0xFFFFFFFE (-2 in 32-bit)
+    # dx=0xFFFF, ax=0xFFFE
+    check_output(output_state, rax=0x12345678ABCDFFFE, rdx=0xFFFF)
+
+
+def test_imul32_signed():
+    # imul ebx (32-bit signed multiply eax * ebx -> rdx:eax)
+    output_state = run("f7eb", rax=0xFEDCBA98FFFFFFFF, rbx=0x1234567800000002)
+    # eax=0xFFFFFFFF (-1), ebx=0x00000002 (2) -> result=0xFFFFFFFFFFFFFFFE (-2)
+    # rdx=0xFFFFFFFF, eax=0xFFFFFFFE
+    check_output(output_state, rax=0x00000000FFFFFFFE, rdx=0xFFFFFFFF)
