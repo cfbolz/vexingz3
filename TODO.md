@@ -22,3 +22,1168 @@
 - Leverage existing dynamic dispatch architecture for new operations
 - Ensure proper bit-width handling for all new operations
 - Consider overflow and edge cases for each instruction type
+## VEX Operations Implementation Status
+
+This section tracks the implementation status of all VEX IR operations extracted from ir.h.
+
+### Arithmetic Operations
+
+- [ ] **Iop_2xMultU64Add128CarryOut** - Implementation needed
+- [ ] **Iop_Add128x1** - Implementation needed
+- [x] **Iop_Add16** - Implemented
+- [ ] **Iop_Add16Fx8** - Implementation needed
+- [ ] **Iop_Add16x16** - Implementation needed
+- [ ] **Iop_Add16x2** - Implementation needed
+- [ ] **Iop_Add16x4** - Implementation needed
+- [ ] **Iop_Add16x8** - Implementation needed
+- [x] **Iop_Add32** - Implemented
+- [ ] **Iop_Add32F0x4** - Implementation needed
+- [ ] **Iop_Add32Fx2** - Implementation needed
+- [x] **Iop_Add32Fx4** - Implemented
+- [ ] **Iop_Add32Fx8** - Implementation needed
+- [ ] **Iop_Add32x2** - Implementation needed
+- [ ] **Iop_Add32x4** - Implementation needed
+- [ ] **Iop_Add32x8** - Implementation needed
+- [x] **Iop_Add64** - Implemented
+- [ ] **Iop_Add64F0x2** - Implementation needed
+- [ ] **Iop_Add64Fx2** - Implementation needed
+- [ ] **Iop_Add64Fx4** - Implementation needed
+- [ ] **Iop_Add64x2** - Implementation needed
+- [ ] **Iop_Add64x4** - Implementation needed
+- [x] **Iop_Add8** - Implemented
+- [ ] **Iop_Add8x16** - Implementation needed
+- [ ] **Iop_Add8x32** - Implementation needed
+- [ ] **Iop_Add8x4** - Implementation needed
+- [ ] **Iop_Add8x8** - Implementation needed
+- [ ] **Iop_AddD128** - Implementation needed
+- [ ] **Iop_AddD64** - Implementation needed
+- [ ] **Iop_AddF128** - Implementation needed
+- [ ] **Iop_AddF16** - Implementation needed
+- [ ] **Iop_AddF32** - Implementation needed
+- [ ] **Iop_AddF64** - Implementation needed
+- [ ] **Iop_AddF64r32** - Implementation needed
+- [ ] **Iop_BCDAdd** - Implementation needed
+- [ ] **Iop_BCDSub** - Implementation needed
+- [ ] **Iop_HAdd16Sx2** - Implementation needed
+- [ ] **Iop_HAdd16Ux2** - Implementation needed
+- [ ] **Iop_HAdd8Sx4** - Implementation needed
+- [ ] **Iop_HAdd8Ux4** - Implementation needed
+- [ ] **Iop_HSub16Sx2** - Implementation needed
+- [ ] **Iop_HSub16Ux2** - Implementation needed
+- [ ] **Iop_HSub8Sx4** - Implementation needed
+- [ ] **Iop_HSub8Ux4** - Implementation needed
+- [ ] **Iop_MAddF128** - Implementation needed
+- [ ] **Iop_MAddF32** - Implementation needed
+- [ ] **Iop_MAddF64** - Implementation needed
+- [ ] **Iop_MAddF64r32** - Implementation needed
+- [ ] **Iop_MSubF128** - Implementation needed
+- [ ] **Iop_MSubF32** - Implementation needed
+- [ ] **Iop_MSubF64** - Implementation needed
+- [ ] **Iop_MSubF64r32** - Implementation needed
+- [ ] **Iop_Neg16Fx8** - Implementation needed
+- [ ] **Iop_Neg32Fx2** - Implementation needed
+- [ ] **Iop_Neg32Fx4** - Implementation needed
+- [ ] **Iop_Neg64Fx2** - Implementation needed
+- [ ] **Iop_NegF128** - Implementation needed
+- [ ] **Iop_NegF16** - Implementation needed
+- [ ] **Iop_NegF32** - Implementation needed
+- [ ] **Iop_NegF64** - Implementation needed
+- [ ] **Iop_NegMAddF128** - Implementation needed
+- [ ] **Iop_NegMSubF128** - Implementation needed
+- [ ] **Iop_PolynomialMulAdd16x8** - Implementation needed
+- [ ] **Iop_PolynomialMulAdd32x4** - Implementation needed
+- [ ] **Iop_PolynomialMulAdd64x2** - Implementation needed
+- [ ] **Iop_PolynomialMulAdd8x16** - Implementation needed
+- [ ] **Iop_PwAdd16x4** - Implementation needed
+- [ ] **Iop_PwAdd16x8** - Implementation needed
+- [ ] **Iop_PwAdd32Fx2** - Implementation needed
+- [ ] **Iop_PwAdd32x2** - Implementation needed
+- [ ] **Iop_PwAdd32x4** - Implementation needed
+- [ ] **Iop_PwAdd8x16** - Implementation needed
+- [ ] **Iop_PwAdd8x8** - Implementation needed
+- [ ] **Iop_PwAddL16Sx4** - Implementation needed
+- [ ] **Iop_PwAddL16Sx8** - Implementation needed
+- [ ] **Iop_PwAddL16Ux4** - Implementation needed
+- [ ] **Iop_PwAddL16Ux8** - Implementation needed
+- [ ] **Iop_PwAddL32Sx2** - Implementation needed
+- [ ] **Iop_PwAddL32Sx4** - Implementation needed
+- [ ] **Iop_PwAddL32Ux2** - Implementation needed
+- [ ] **Iop_PwAddL32Ux4** - Implementation needed
+- [ ] **Iop_PwAddL64Ux2** - Implementation needed
+- [ ] **Iop_PwAddL8Sx16** - Implementation needed
+- [ ] **Iop_PwAddL8Sx8** - Implementation needed
+- [ ] **Iop_PwAddL8Ux16** - Implementation needed
+- [ ] **Iop_PwAddL8Ux8** - Implementation needed
+- [ ] **Iop_PwExtUSMulQAdd8x16** - Implementation needed
+- [ ] **Iop_QAdd16Sx16** - Implementation needed
+- [ ] **Iop_QAdd16Sx2** - Implementation needed
+- [ ] **Iop_QAdd16Sx4** - Implementation needed
+- [ ] **Iop_QAdd16Sx8** - Implementation needed
+- [ ] **Iop_QAdd16Ux16** - Implementation needed
+- [ ] **Iop_QAdd16Ux2** - Implementation needed
+- [ ] **Iop_QAdd16Ux4** - Implementation needed
+- [ ] **Iop_QAdd16Ux8** - Implementation needed
+- [ ] **Iop_QAdd32S** - Implementation needed
+- [ ] **Iop_QAdd32Sx2** - Implementation needed
+- [ ] **Iop_QAdd32Sx4** - Implementation needed
+- [ ] **Iop_QAdd32Ux2** - Implementation needed
+- [ ] **Iop_QAdd32Ux4** - Implementation needed
+- [ ] **Iop_QAdd64Sx1** - Implementation needed
+- [ ] **Iop_QAdd64Sx2** - Implementation needed
+- [ ] **Iop_QAdd64Ux1** - Implementation needed
+- [ ] **Iop_QAdd64Ux2** - Implementation needed
+- [ ] **Iop_QAdd8Sx16** - Implementation needed
+- [ ] **Iop_QAdd8Sx32** - Implementation needed
+- [ ] **Iop_QAdd8Sx4** - Implementation needed
+- [ ] **Iop_QAdd8Sx8** - Implementation needed
+- [ ] **Iop_QAdd8Ux16** - Implementation needed
+- [ ] **Iop_QAdd8Ux32** - Implementation needed
+- [ ] **Iop_QAdd8Ux4** - Implementation needed
+- [ ] **Iop_QAdd8Ux8** - Implementation needed
+- [ ] **Iop_QAddExtSUsatUU16x8** - Implementation needed
+- [ ] **Iop_QAddExtSUsatUU32x4** - Implementation needed
+- [ ] **Iop_QAddExtSUsatUU64x2** - Implementation needed
+- [ ] **Iop_QAddExtSUsatUU8x16** - Implementation needed
+- [ ] **Iop_QAddExtUSsatSS16x8** - Implementation needed
+- [ ] **Iop_QAddExtUSsatSS32x4** - Implementation needed
+- [ ] **Iop_QAddExtUSsatSS64x2** - Implementation needed
+- [ ] **Iop_QAddExtUSsatSS8x16** - Implementation needed
+- [ ] **Iop_QSub16Sx16** - Implementation needed
+- [ ] **Iop_QSub16Sx2** - Implementation needed
+- [ ] **Iop_QSub16Sx4** - Implementation needed
+- [ ] **Iop_QSub16Sx8** - Implementation needed
+- [ ] **Iop_QSub16Ux16** - Implementation needed
+- [ ] **Iop_QSub16Ux2** - Implementation needed
+- [ ] **Iop_QSub16Ux4** - Implementation needed
+- [ ] **Iop_QSub16Ux8** - Implementation needed
+- [ ] **Iop_QSub32S** - Implementation needed
+- [ ] **Iop_QSub32Sx2** - Implementation needed
+- [ ] **Iop_QSub32Sx4** - Implementation needed
+- [ ] **Iop_QSub32Ux2** - Implementation needed
+- [ ] **Iop_QSub32Ux4** - Implementation needed
+- [ ] **Iop_QSub64Sx1** - Implementation needed
+- [ ] **Iop_QSub64Sx2** - Implementation needed
+- [ ] **Iop_QSub64Ux1** - Implementation needed
+- [ ] **Iop_QSub64Ux2** - Implementation needed
+- [ ] **Iop_QSub8Sx16** - Implementation needed
+- [ ] **Iop_QSub8Sx32** - Implementation needed
+- [ ] **Iop_QSub8Sx4** - Implementation needed
+- [ ] **Iop_QSub8Sx8** - Implementation needed
+- [ ] **Iop_QSub8Ux16** - Implementation needed
+- [ ] **Iop_QSub8Ux32** - Implementation needed
+- [ ] **Iop_QSub8Ux4** - Implementation needed
+- [ ] **Iop_QSub8Ux8** - Implementation needed
+- [ ] **Iop_RoundF64toF64_NegINF** - Implementation needed
+- [ ] **Iop_Sub128x1** - Implementation needed
+- [x] **Iop_Sub16** - Implemented
+- [ ] **Iop_Sub16Fx8** - Implementation needed
+- [ ] **Iop_Sub16x16** - Implementation needed
+- [ ] **Iop_Sub16x2** - Implementation needed
+- [ ] **Iop_Sub16x4** - Implementation needed
+- [ ] **Iop_Sub16x8** - Implementation needed
+- [x] **Iop_Sub32** - Implemented
+- [ ] **Iop_Sub32F0x4** - Implementation needed
+- [ ] **Iop_Sub32Fx2** - Implementation needed
+- [ ] **Iop_Sub32Fx4** - Implementation needed
+- [ ] **Iop_Sub32Fx8** - Implementation needed
+- [ ] **Iop_Sub32x2** - Implementation needed
+- [ ] **Iop_Sub32x4** - Implementation needed
+- [ ] **Iop_Sub32x8** - Implementation needed
+- [x] **Iop_Sub64** - Implemented
+- [ ] **Iop_Sub64F0x2** - Implementation needed
+- [ ] **Iop_Sub64Fx2** - Implementation needed
+- [ ] **Iop_Sub64Fx4** - Implementation needed
+- [ ] **Iop_Sub64x2** - Implementation needed
+- [ ] **Iop_Sub64x4** - Implementation needed
+- [x] **Iop_Sub8** - Implemented
+- [ ] **Iop_Sub8x16** - Implementation needed
+- [ ] **Iop_Sub8x32** - Implementation needed
+- [ ] **Iop_Sub8x4** - Implementation needed
+- [ ] **Iop_Sub8x8** - Implementation needed
+- [ ] **Iop_SubD128** - Implementation needed
+- [ ] **Iop_SubD64** - Implementation needed
+- [ ] **Iop_SubF128** - Implementation needed
+- [ ] **Iop_SubF16** - Implementation needed
+- [ ] **Iop_SubF32** - Implementation needed
+- [ ] **Iop_SubF64** - Implementation needed
+- [ ] **Iop_SubF64r32** - Implementation needed
+
+### Bitwise Operations
+
+- [ ] **Iop_And1** - Implementation needed
+- [x] **Iop_And16** - Implemented
+- [x] **Iop_And32** - Implemented
+- [x] **Iop_And64** - Implemented
+- [x] **Iop_And8** - Implemented
+- [ ] **Iop_AndV128** - Implementation needed
+- [ ] **Iop_AndV256** - Implementation needed
+- [ ] **Iop_CmpORD32S** - Implementation needed
+- [ ] **Iop_CmpORD32U** - Implementation needed
+- [ ] **Iop_CmpORD64S** - Implementation needed
+- [ ] **Iop_CmpORD64U** - Implementation needed
+- [ ] **Iop_Not1** - Implementation needed
+- [x] **Iop_Not16** - Implemented
+- [x] **Iop_Not32** - Implemented
+- [x] **Iop_Not64** - Implemented
+- [x] **Iop_Not8** - Implemented
+- [ ] **Iop_NotV128** - Implementation needed
+- [ ] **Iop_NotV256** - Implementation needed
+- [ ] **Iop_Or1** - Implementation needed
+- [x] **Iop_Or16** - Implemented
+- [x] **Iop_Or32** - Implemented
+- [x] **Iop_Or64** - Implemented
+- [x] **Iop_Or8** - Implemented
+- [ ] **Iop_OrV128** - Implementation needed
+- [ ] **Iop_OrV256** - Implementation needed
+- [ ] **Iop_PermOrZero8x16** - Implementation needed
+- [ ] **Iop_PermOrZero8x8** - Implementation needed
+- [ ] **Iop_QandQRSarNnarrow16Sto8Sx8** - Implementation needed
+- [ ] **Iop_QandQRSarNnarrow16Sto8Ux8** - Implementation needed
+- [ ] **Iop_QandQRSarNnarrow32Sto16Sx4** - Implementation needed
+- [ ] **Iop_QandQRSarNnarrow32Sto16Ux4** - Implementation needed
+- [ ] **Iop_QandQRSarNnarrow64Sto32Sx2** - Implementation needed
+- [ ] **Iop_QandQRSarNnarrow64Sto32Ux2** - Implementation needed
+- [ ] **Iop_QandQRShrNnarrow16Uto8Ux8** - Implementation needed
+- [ ] **Iop_QandQRShrNnarrow32Uto16Ux4** - Implementation needed
+- [ ] **Iop_QandQRShrNnarrow64Uto32Ux2** - Implementation needed
+- [ ] **Iop_QandQSarNnarrow16Sto8Sx8** - Implementation needed
+- [ ] **Iop_QandQSarNnarrow16Sto8Ux8** - Implementation needed
+- [ ] **Iop_QandQSarNnarrow32Sto16Sx4** - Implementation needed
+- [ ] **Iop_QandQSarNnarrow32Sto16Ux4** - Implementation needed
+- [ ] **Iop_QandQSarNnarrow64Sto32Sx2** - Implementation needed
+- [ ] **Iop_QandQSarNnarrow64Sto32Ux2** - Implementation needed
+- [ ] **Iop_QandQShrNnarrow16Uto8Ux8** - Implementation needed
+- [ ] **Iop_QandQShrNnarrow32Uto16Ux4** - Implementation needed
+- [ ] **Iop_QandQShrNnarrow64Uto32Ux2** - Implementation needed
+- [ ] **Iop_QandSQRsh16x8** - Implementation needed
+- [ ] **Iop_QandSQRsh32x4** - Implementation needed
+- [ ] **Iop_QandSQRsh64x2** - Implementation needed
+- [ ] **Iop_QandSQRsh8x16** - Implementation needed
+- [ ] **Iop_QandSQsh16x8** - Implementation needed
+- [ ] **Iop_QandSQsh32x4** - Implementation needed
+- [ ] **Iop_QandSQsh64x2** - Implementation needed
+- [ ] **Iop_QandSQsh8x16** - Implementation needed
+- [ ] **Iop_QandUQRsh16x8** - Implementation needed
+- [ ] **Iop_QandUQRsh32x4** - Implementation needed
+- [ ] **Iop_QandUQRsh64x2** - Implementation needed
+- [ ] **Iop_QandUQRsh8x16** - Implementation needed
+- [ ] **Iop_QandUQsh16x8** - Implementation needed
+- [ ] **Iop_QandUQsh32x4** - Implementation needed
+- [ ] **Iop_QandUQsh64x2** - Implementation needed
+- [ ] **Iop_QandUQsh8x16** - Implementation needed
+- [x] **Iop_Xor16** - Implemented
+- [x] **Iop_Xor32** - Implemented
+- [x] **Iop_Xor64** - Implemented
+- [x] **Iop_Xor8** - Implemented
+- [ ] **Iop_XorV128** - Implementation needed
+- [ ] **Iop_XorV256** - Implementation needed
+
+### Comparison Operations
+
+- [x] **Iop_16HLto32** - Implemented
+- [x] **Iop_32HLto64** - Implemented
+- [x] **Iop_64HLto128** - Implemented
+- [ ] **Iop_64HLtoV128** - Implementation needed
+- [ ] **Iop_8HLto16** - Implementation needed
+- [ ] **Iop_CasCmpEQ16** - Implementation needed
+- [ ] **Iop_CasCmpEQ32** - Implementation needed
+- [ ] **Iop_CasCmpEQ64** - Implementation needed
+- [ ] **Iop_CasCmpEQ8** - Implementation needed
+- [ ] **Iop_CasCmpNE16** - Implementation needed
+- [ ] **Iop_CasCmpNE32** - Implementation needed
+- [ ] **Iop_CasCmpNE64** - Implementation needed
+- [ ] **Iop_CasCmpNE8** - Implementation needed
+- [ ] **Iop_CatEvenLanes16x4** - Implementation needed
+- [ ] **Iop_CatEvenLanes16x8** - Implementation needed
+- [ ] **Iop_CatEvenLanes32x4** - Implementation needed
+- [ ] **Iop_CatEvenLanes8x16** - Implementation needed
+- [ ] **Iop_CatEvenLanes8x8** - Implementation needed
+- [ ] **Iop_CatOddLanes16x4** - Implementation needed
+- [ ] **Iop_CatOddLanes16x8** - Implementation needed
+- [ ] **Iop_CatOddLanes32x4** - Implementation needed
+- [ ] **Iop_CatOddLanes8x16** - Implementation needed
+- [ ] **Iop_CatOddLanes8x8** - Implementation needed
+- [ ] **Iop_CmpD128** - Implementation needed
+- [ ] **Iop_CmpD64** - Implementation needed
+- [ ] **Iop_CmpEQ16** - Implementation needed
+- [ ] **Iop_CmpEQ16Fx8** - Implementation needed
+- [ ] **Iop_CmpEQ16x16** - Implementation needed
+- [ ] **Iop_CmpEQ16x4** - Implementation needed
+- [ ] **Iop_CmpEQ16x8** - Implementation needed
+- [x] **Iop_CmpEQ32** - Implemented
+- [ ] **Iop_CmpEQ32F0x4** - Implementation needed
+- [ ] **Iop_CmpEQ32Fx2** - Implementation needed
+- [ ] **Iop_CmpEQ32Fx4** - Implementation needed
+- [ ] **Iop_CmpEQ32x2** - Implementation needed
+- [ ] **Iop_CmpEQ32x4** - Implementation needed
+- [ ] **Iop_CmpEQ32x8** - Implementation needed
+- [x] **Iop_CmpEQ64** - Implemented
+- [ ] **Iop_CmpEQ64F0x2** - Implementation needed
+- [ ] **Iop_CmpEQ64Fx2** - Implementation needed
+- [ ] **Iop_CmpEQ64x2** - Implementation needed
+- [ ] **Iop_CmpEQ64x4** - Implementation needed
+- [ ] **Iop_CmpEQ8** - Implementation needed
+- [ ] **Iop_CmpEQ8x16** - Implementation needed
+- [ ] **Iop_CmpEQ8x32** - Implementation needed
+- [ ] **Iop_CmpEQ8x8** - Implementation needed
+- [ ] **Iop_CmpExpD128** - Implementation needed
+- [ ] **Iop_CmpExpD64** - Implementation needed
+- [ ] **Iop_CmpF128** - Implementation needed
+- [ ] **Iop_CmpF16** - Implementation needed
+- [ ] **Iop_CmpF32** - Implementation needed
+- [ ] **Iop_CmpF64** - Implementation needed
+- [ ] **Iop_CmpGE32Fx2** - Implementation needed
+- [ ] **Iop_CmpGE32Fx4** - Implementation needed
+- [ ] **Iop_CmpGT16Sx16** - Implementation needed
+- [ ] **Iop_CmpGT16Sx4** - Implementation needed
+- [ ] **Iop_CmpGT16Sx8** - Implementation needed
+- [ ] **Iop_CmpGT16Ux4** - Implementation needed
+- [ ] **Iop_CmpGT16Ux8** - Implementation needed
+- [ ] **Iop_CmpGT32Fx2** - Implementation needed
+- [ ] **Iop_CmpGT32Fx4** - Implementation needed
+- [ ] **Iop_CmpGT32Sx2** - Implementation needed
+- [ ] **Iop_CmpGT32Sx4** - Implementation needed
+- [ ] **Iop_CmpGT32Sx8** - Implementation needed
+- [ ] **Iop_CmpGT32Ux2** - Implementation needed
+- [ ] **Iop_CmpGT32Ux4** - Implementation needed
+- [ ] **Iop_CmpGT64Sx2** - Implementation needed
+- [ ] **Iop_CmpGT64Sx4** - Implementation needed
+- [ ] **Iop_CmpGT64Ux2** - Implementation needed
+- [ ] **Iop_CmpGT8Sx16** - Implementation needed
+- [ ] **Iop_CmpGT8Sx32** - Implementation needed
+- [ ] **Iop_CmpGT8Sx8** - Implementation needed
+- [ ] **Iop_CmpGT8Ux16** - Implementation needed
+- [ ] **Iop_CmpGT8Ux8** - Implementation needed
+- [ ] **Iop_CmpLE16Fx8** - Implementation needed
+- [ ] **Iop_CmpLE32F0x4** - Implementation needed
+- [ ] **Iop_CmpLE32Fx4** - Implementation needed
+- [ ] **Iop_CmpLE32S** - Implementation needed
+- [ ] **Iop_CmpLE32U** - Implementation needed
+- [ ] **Iop_CmpLE64F0x2** - Implementation needed
+- [ ] **Iop_CmpLE64Fx2** - Implementation needed
+- [ ] **Iop_CmpLE64S** - Implementation needed
+- [ ] **Iop_CmpLE64U** - Implementation needed
+- [ ] **Iop_CmpLT16Fx8** - Implementation needed
+- [ ] **Iop_CmpLT32F0x4** - Implementation needed
+- [ ] **Iop_CmpLT32Fx4** - Implementation needed
+- [ ] **Iop_CmpLT32S** - Implementation needed
+- [ ] **Iop_CmpLT32U** - Implementation needed
+- [ ] **Iop_CmpLT64F0x2** - Implementation needed
+- [ ] **Iop_CmpLT64Fx2** - Implementation needed
+- [x] **Iop_CmpLT64S** - Implemented
+- [ ] **Iop_CmpLT64U** - Implementation needed
+- [ ] **Iop_CmpNE16** - Implementation needed
+- [ ] **Iop_CmpNE32** - Implementation needed
+- [ ] **Iop_CmpNE64** - Implementation needed
+- [x] **Iop_CmpNE8** - Implemented
+- [ ] **Iop_CmpNEZ128x1** - Implementation needed
+- [ ] **Iop_CmpNEZ16** - Implementation needed
+- [ ] **Iop_CmpNEZ16x16** - Implementation needed
+- [ ] **Iop_CmpNEZ16x2** - Implementation needed
+- [ ] **Iop_CmpNEZ16x4** - Implementation needed
+- [ ] **Iop_CmpNEZ16x8** - Implementation needed
+- [ ] **Iop_CmpNEZ32** - Implementation needed
+- [ ] **Iop_CmpNEZ32x2** - Implementation needed
+- [ ] **Iop_CmpNEZ32x4** - Implementation needed
+- [ ] **Iop_CmpNEZ32x8** - Implementation needed
+- [ ] **Iop_CmpNEZ64** - Implementation needed
+- [ ] **Iop_CmpNEZ64x2** - Implementation needed
+- [ ] **Iop_CmpNEZ64x4** - Implementation needed
+- [ ] **Iop_CmpNEZ8** - Implementation needed
+- [ ] **Iop_CmpNEZ8x16** - Implementation needed
+- [ ] **Iop_CmpNEZ8x32** - Implementation needed
+- [ ] **Iop_CmpNEZ8x4** - Implementation needed
+- [ ] **Iop_CmpNEZ8x8** - Implementation needed
+- [ ] **Iop_CmpUN32F0x4** - Implementation needed
+- [ ] **Iop_CmpUN32Fx4** - Implementation needed
+- [ ] **Iop_CmpUN64F0x2** - Implementation needed
+- [ ] **Iop_CmpUN64Fx2** - Implementation needed
+- [ ] **Iop_CmpwNEZ32** - Implementation needed
+- [ ] **Iop_CmpwNEZ64** - Implementation needed
+- [ ] **Iop_D64HLtoD128** - Implementation needed
+- [ ] **Iop_ExpCmpNE16** - Implementation needed
+- [ ] **Iop_ExpCmpNE32** - Implementation needed
+- [ ] **Iop_ExpCmpNE64** - Implementation needed
+- [ ] **Iop_ExpCmpNE8** - Implementation needed
+- [ ] **Iop_F64HLtoF128** - Implementation needed
+- [ ] **Iop_GetElem16x4** - Implementation needed
+- [ ] **Iop_GetElem16x8** - Implementation needed
+- [ ] **Iop_GetElem32x2** - Implementation needed
+- [ ] **Iop_GetElem32x4** - Implementation needed
+- [ ] **Iop_GetElem64x2** - Implementation needed
+- [ ] **Iop_GetElem8x16** - Implementation needed
+- [ ] **Iop_GetElem8x8** - Implementation needed
+- [ ] **Iop_GetMSBs8x16** - Implementation needed
+- [ ] **Iop_GetMSBs8x8** - Implementation needed
+- [ ] **Iop_InterleaveEvenLanes16x4** - Implementation needed
+- [ ] **Iop_InterleaveEvenLanes16x8** - Implementation needed
+- [ ] **Iop_InterleaveEvenLanes32x4** - Implementation needed
+- [ ] **Iop_InterleaveEvenLanes8x16** - Implementation needed
+- [ ] **Iop_InterleaveEvenLanes8x8** - Implementation needed
+- [ ] **Iop_InterleaveHI16x4** - Implementation needed
+- [ ] **Iop_InterleaveHI16x8** - Implementation needed
+- [ ] **Iop_InterleaveHI32x2** - Implementation needed
+- [ ] **Iop_InterleaveHI32x4** - Implementation needed
+- [ ] **Iop_InterleaveHI64x2** - Implementation needed
+- [ ] **Iop_InterleaveHI8x16** - Implementation needed
+- [ ] **Iop_InterleaveHI8x8** - Implementation needed
+- [ ] **Iop_InterleaveLO16x4** - Implementation needed
+- [ ] **Iop_InterleaveLO16x8** - Implementation needed
+- [ ] **Iop_InterleaveLO32x2** - Implementation needed
+- [ ] **Iop_InterleaveLO32x4** - Implementation needed
+- [ ] **Iop_InterleaveLO64x2** - Implementation needed
+- [ ] **Iop_InterleaveLO8x16** - Implementation needed
+- [ ] **Iop_InterleaveLO8x8** - Implementation needed
+- [ ] **Iop_InterleaveOddLanes16x4** - Implementation needed
+- [ ] **Iop_InterleaveOddLanes16x8** - Implementation needed
+- [ ] **Iop_InterleaveOddLanes32x4** - Implementation needed
+- [ ] **Iop_InterleaveOddLanes8x16** - Implementation needed
+- [ ] **Iop_InterleaveOddLanes8x8** - Implementation needed
+- [ ] **Iop_Left16** - Implementation needed
+- [ ] **Iop_Left32** - Implementation needed
+- [ ] **Iop_Left64** - Implementation needed
+- [ ] **Iop_Left8** - Implementation needed
+- [ ] **Iop_MullEven16Sx8** - Implementation needed
+- [ ] **Iop_MullEven16Ux8** - Implementation needed
+- [ ] **Iop_MullEven32Sx4** - Implementation needed
+- [ ] **Iop_MullEven32Ux4** - Implementation needed
+- [ ] **Iop_MullEven8Sx16** - Implementation needed
+- [ ] **Iop_MullEven8Ux16** - Implementation needed
+- [ ] **Iop_PackEvenLanes16x8** - Implementation needed
+- [ ] **Iop_PackEvenLanes32x4** - Implementation needed
+- [ ] **Iop_PackEvenLanes8x16** - Implementation needed
+- [ ] **Iop_PackOddLanes16x8** - Implementation needed
+- [ ] **Iop_PackOddLanes32x4** - Implementation needed
+- [ ] **Iop_PackOddLanes8x16** - Implementation needed
+- [ ] **Iop_RoundF64toF64_NEAREST** - Implementation needed
+- [ ] **Iop_Scale2_32Fx4** - Implementation needed
+- [ ] **Iop_Scale2_64Fx2** - Implementation needed
+- [ ] **Iop_ScaleF64** - Implementation needed
+- [ ] **Iop_SetElem16x4** - Implementation needed
+- [ ] **Iop_SetElem16x8** - Implementation needed
+- [ ] **Iop_SetElem32x2** - Implementation needed
+- [ ] **Iop_SetElem32x4** - Implementation needed
+- [ ] **Iop_SetElem64x2** - Implementation needed
+- [ ] **Iop_SetElem8x16** - Implementation needed
+- [ ] **Iop_SetElem8x8** - Implementation needed
+- [ ] **Iop_V128HLtoV256** - Implementation needed
+
+### Conversion Operations
+
+- [x] **Iop_128HIto64** - Implemented
+- [x] **Iop_128to64** - Implemented
+- [ ] **Iop_16HIto8** - Implementation needed
+- [x] **Iop_16Sto32** - Implemented
+- [x] **Iop_16Sto64** - Implemented
+- [x] **Iop_16Uto32** - Implemented
+- [x] **Iop_16Uto64** - Implemented
+- [x] **Iop_16to8** - Implemented
+- [ ] **Iop_1Sto16** - Implementation needed
+- [ ] **Iop_1Sto32** - Implementation needed
+- [ ] **Iop_1Sto64** - Implementation needed
+- [ ] **Iop_1Sto8** - Implementation needed
+- [ ] **Iop_1Uto32** - Implementation needed
+- [x] **Iop_1Uto64** - Implemented
+- [ ] **Iop_1Uto8** - Implementation needed
+- [x] **Iop_32HIto16** - Implemented
+- [x] **Iop_32Sto64** - Implemented
+- [x] **Iop_32Uto64** - Implemented
+- [ ] **Iop_32UtoV128** - Implementation needed
+- [ ] **Iop_32to1** - Implementation needed
+- [x] **Iop_32to16** - Implemented
+- [ ] **Iop_32to8** - Implementation needed
+- [x] **Iop_64HIto32** - Implemented
+- [ ] **Iop_64UtoV128** - Implementation needed
+- [x] **Iop_64to1** - Implemented
+- [x] **Iop_64to16** - Implemented
+- [x] **Iop_64to32** - Implemented
+- [x] **Iop_64to8** - Implemented
+- [ ] **Iop_64x4toV256** - Implementation needed
+- [x] **Iop_8Sto16** - Implemented
+- [ ] **Iop_8Sto32** - Implementation needed
+- [x] **Iop_8Sto64** - Implemented
+- [x] **Iop_8Uto16** - Implemented
+- [ ] **Iop_8Uto32** - Implementation needed
+- [x] **Iop_8Uto64** - Implemented
+- [ ] **Iop_BCD128toI128S** - Implementation needed
+- [ ] **Iop_BCDtoDPB** - Implementation needed
+- [ ] **Iop_D128HItoD64** - Implementation needed
+- [ ] **Iop_D128LOtoD64** - Implementation needed
+- [ ] **Iop_D128toD64** - Implementation needed
+- [ ] **Iop_D128toF128** - Implementation needed
+- [ ] **Iop_D128toF32** - Implementation needed
+- [ ] **Iop_D128toF64** - Implementation needed
+- [ ] **Iop_D128toI128S** - Implementation needed
+- [ ] **Iop_D128toI32S** - Implementation needed
+- [ ] **Iop_D128toI32U** - Implementation needed
+- [ ] **Iop_D128toI64S** - Implementation needed
+- [ ] **Iop_D128toI64U** - Implementation needed
+- [ ] **Iop_D32toD64** - Implementation needed
+- [ ] **Iop_D32toF128** - Implementation needed
+- [ ] **Iop_D32toF32** - Implementation needed
+- [ ] **Iop_D32toF64** - Implementation needed
+- [ ] **Iop_D64toD128** - Implementation needed
+- [ ] **Iop_D64toD32** - Implementation needed
+- [ ] **Iop_D64toF128** - Implementation needed
+- [ ] **Iop_D64toF32** - Implementation needed
+- [ ] **Iop_D64toF64** - Implementation needed
+- [ ] **Iop_D64toI32S** - Implementation needed
+- [ ] **Iop_D64toI32U** - Implementation needed
+- [ ] **Iop_D64toI64S** - Implementation needed
+- [ ] **Iop_D64toI64U** - Implementation needed
+- [ ] **Iop_DPBtoBCD** - Implementation needed
+- [x] **Iop_DivModS128to64** - Implemented
+- [ ] **Iop_DivModS32to32** - Implementation needed
+- [x] **Iop_DivModS64to32** - Implemented
+- [ ] **Iop_DivModS64to64** - Implementation needed
+- [x] **Iop_DivModU128to64** - Implemented
+- [ ] **Iop_DivModU32to32** - Implementation needed
+- [x] **Iop_DivModU64to32** - Implemented
+- [ ] **Iop_DivModU64to64** - Implementation needed
+- [ ] **Iop_F128HItoF64** - Implementation needed
+- [ ] **Iop_F128LOtoF64** - Implementation needed
+- [ ] **Iop_F128toD128** - Implementation needed
+- [ ] **Iop_F128toD32** - Implementation needed
+- [ ] **Iop_F128toD64** - Implementation needed
+- [ ] **Iop_F128toF32** - Implementation needed
+- [ ] **Iop_F128toF64** - Implementation needed
+- [ ] **Iop_F128toI128S** - Implementation needed
+- [ ] **Iop_F128toI32S** - Implementation needed
+- [ ] **Iop_F128toI32U** - Implementation needed
+- [ ] **Iop_F128toI64S** - Implementation needed
+- [ ] **Iop_F128toI64U** - Implementation needed
+- [ ] **Iop_F16toF32** - Implementation needed
+- [ ] **Iop_F16toF32x4** - Implementation needed
+- [ ] **Iop_F16toF32x8** - Implementation needed
+- [ ] **Iop_F16toF64** - Implementation needed
+- [ ] **Iop_F16toF64x2** - Implementation needed
+- [ ] **Iop_F32ToFixed32Sx2_RZ** - Implementation needed
+- [ ] **Iop_F32ToFixed32Sx4_RZ** - Implementation needed
+- [ ] **Iop_F32ToFixed32Ux2_RZ** - Implementation needed
+- [ ] **Iop_F32ToFixed32Ux4_RZ** - Implementation needed
+- [ ] **Iop_F32toD128** - Implementation needed
+- [ ] **Iop_F32toD32** - Implementation needed
+- [ ] **Iop_F32toD64** - Implementation needed
+- [ ] **Iop_F32toF128** - Implementation needed
+- [ ] **Iop_F32toF16** - Implementation needed
+- [ ] **Iop_F32toF16x4** - Implementation needed
+- [ ] **Iop_F32toF16x4_DEP** - Implementation needed
+- [ ] **Iop_F32toF16x8** - Implementation needed
+- [ ] **Iop_F32toF64** - Implementation needed
+- [ ] **Iop_F32toI32S** - Implementation needed
+- [ ] **Iop_F32toI32Sx2_RZ** - Implementation needed
+- [ ] **Iop_F32toI32Sx4** - Implementation needed
+- [ ] **Iop_F32toI32Sx4_RZ** - Implementation needed
+- [ ] **Iop_F32toI32Sx8** - Implementation needed
+- [ ] **Iop_F32toI32U** - Implementation needed
+- [ ] **Iop_F32toI32Ux2_RZ** - Implementation needed
+- [ ] **Iop_F32toI32Ux4_RZ** - Implementation needed
+- [ ] **Iop_F32toI64S** - Implementation needed
+- [ ] **Iop_F32toI64U** - Implementation needed
+- [ ] **Iop_F32x4_2toQ16x8** - Implementation needed
+- [ ] **Iop_F64toD128** - Implementation needed
+- [ ] **Iop_F64toD32** - Implementation needed
+- [ ] **Iop_F64toD64** - Implementation needed
+- [ ] **Iop_F64toF128** - Implementation needed
+- [ ] **Iop_F64toF16** - Implementation needed
+- [ ] **Iop_F64toF16x2_DEP** - Implementation needed
+- [ ] **Iop_F64toF32** - Implementation needed
+- [ ] **Iop_F64toI16S** - Implementation needed
+- [ ] **Iop_F64toI32S** - Implementation needed
+- [ ] **Iop_F64toI32U** - Implementation needed
+- [ ] **Iop_F64toI64S** - Implementation needed
+- [ ] **Iop_F64toI64U** - Implementation needed
+- [ ] **Iop_F64x2_2toQ32x4** - Implementation needed
+- [ ] **Iop_Fixed32SToF32x2_RN** - Implementation needed
+- [ ] **Iop_Fixed32SToF32x4_RN** - Implementation needed
+- [ ] **Iop_Fixed32UToF32x2_RN** - Implementation needed
+- [ ] **Iop_Fixed32UToF32x4_RN** - Implementation needed
+- [ ] **Iop_I128StoBCD128** - Implementation needed
+- [ ] **Iop_I128StoD128** - Implementation needed
+- [ ] **Iop_I128StoF128** - Implementation needed
+- [ ] **Iop_I128UtoF128** - Implementation needed
+- [ ] **Iop_I32StoD128** - Implementation needed
+- [ ] **Iop_I32StoD64** - Implementation needed
+- [ ] **Iop_I32StoF128** - Implementation needed
+- [ ] **Iop_I32StoF32** - Implementation needed
+- [ ] **Iop_I32StoF32x2_DEP** - Implementation needed
+- [ ] **Iop_I32StoF32x4** - Implementation needed
+- [ ] **Iop_I32StoF32x4_DEP** - Implementation needed
+- [ ] **Iop_I32StoF32x8** - Implementation needed
+- [ ] **Iop_I32StoF64** - Implementation needed
+- [ ] **Iop_I32UtoD128** - Implementation needed
+- [ ] **Iop_I32UtoD64** - Implementation needed
+- [ ] **Iop_I32UtoF128** - Implementation needed
+- [ ] **Iop_I32UtoF32** - Implementation needed
+- [ ] **Iop_I32UtoF32x2_DEP** - Implementation needed
+- [ ] **Iop_I32UtoF32x4_DEP** - Implementation needed
+- [ ] **Iop_I32UtoF64** - Implementation needed
+- [ ] **Iop_I64StoD128** - Implementation needed
+- [ ] **Iop_I64StoD64** - Implementation needed
+- [ ] **Iop_I64StoF128** - Implementation needed
+- [ ] **Iop_I64StoF32** - Implementation needed
+- [ ] **Iop_I64StoF64** - Implementation needed
+- [ ] **Iop_I64UtoD128** - Implementation needed
+- [ ] **Iop_I64UtoD64** - Implementation needed
+- [ ] **Iop_I64UtoF128** - Implementation needed
+- [ ] **Iop_I64UtoF32** - Implementation needed
+- [ ] **Iop_I64UtoF64** - Implementation needed
+- [ ] **Iop_Log2_32Fx4** - Implementation needed
+- [ ] **Iop_Log2_64Fx2** - Implementation needed
+- [ ] **Iop_MulHi16Sx16** - Implementation needed
+- [ ] **Iop_MulHi16Sx4** - Implementation needed
+- [ ] **Iop_MulHi16Sx8** - Implementation needed
+- [ ] **Iop_MulHi16Ux16** - Implementation needed
+- [ ] **Iop_MulHi16Ux4** - Implementation needed
+- [ ] **Iop_MulHi16Ux8** - Implementation needed
+- [ ] **Iop_MulHi32Sx4** - Implementation needed
+- [ ] **Iop_MulHi32Ux4** - Implementation needed
+- [ ] **Iop_MulHi8Sx16** - Implementation needed
+- [ ] **Iop_MulHi8Ux16** - Implementation needed
+- [ ] **Iop_NarrowBin16to8x16** - Implementation needed
+- [ ] **Iop_NarrowBin16to8x8** - Implementation needed
+- [ ] **Iop_NarrowBin32to16x4** - Implementation needed
+- [ ] **Iop_NarrowBin32to16x8** - Implementation needed
+- [ ] **Iop_NarrowBin64to32x4** - Implementation needed
+- [ ] **Iop_NarrowUn16to8x8** - Implementation needed
+- [ ] **Iop_NarrowUn32to16x4** - Implementation needed
+- [ ] **Iop_NarrowUn64to32x2** - Implementation needed
+- [ ] **Iop_QDMulHi16Sx4** - Implementation needed
+- [ ] **Iop_QDMulHi16Sx8** - Implementation needed
+- [ ] **Iop_QDMulHi32Sx2** - Implementation needed
+- [ ] **Iop_QDMulHi32Sx4** - Implementation needed
+- [ ] **Iop_QF32toI32Sx4_RZ** - Implementation needed
+- [ ] **Iop_QF32toI32Ux4_RZ** - Implementation needed
+- [ ] **Iop_QNarrowBin16Sto8Sx16** - Implementation needed
+- [ ] **Iop_QNarrowBin16Sto8Sx8** - Implementation needed
+- [ ] **Iop_QNarrowBin16Sto8Ux16** - Implementation needed
+- [ ] **Iop_QNarrowBin16Sto8Ux8** - Implementation needed
+- [ ] **Iop_QNarrowBin16Uto8Ux16** - Implementation needed
+- [ ] **Iop_QNarrowBin32Sto16Sx4** - Implementation needed
+- [ ] **Iop_QNarrowBin32Sto16Sx8** - Implementation needed
+- [ ] **Iop_QNarrowBin32Sto16Ux8** - Implementation needed
+- [ ] **Iop_QNarrowBin32Uto16Ux8** - Implementation needed
+- [ ] **Iop_QNarrowBin64Sto32Sx4** - Implementation needed
+- [ ] **Iop_QNarrowBin64Uto32Ux4** - Implementation needed
+- [ ] **Iop_QNarrowUn16Sto8Sx8** - Implementation needed
+- [ ] **Iop_QNarrowUn16Sto8Ux8** - Implementation needed
+- [ ] **Iop_QNarrowUn16Uto8Ux8** - Implementation needed
+- [ ] **Iop_QNarrowUn32Sto16Sx4** - Implementation needed
+- [ ] **Iop_QNarrowUn32Sto16Ux4** - Implementation needed
+- [ ] **Iop_QNarrowUn32Uto16Ux4** - Implementation needed
+- [ ] **Iop_QNarrowUn64Sto32Sx2** - Implementation needed
+- [ ] **Iop_QNarrowUn64Sto32Ux2** - Implementation needed
+- [ ] **Iop_QNarrowUn64Uto32Ux2** - Implementation needed
+- [ ] **Iop_QRDMulHi16Sx4** - Implementation needed
+- [ ] **Iop_QRDMulHi16Sx8** - Implementation needed
+- [ ] **Iop_QRDMulHi32Sx2** - Implementation needed
+- [ ] **Iop_QRDMulHi32Sx4** - Implementation needed
+- [ ] **Iop_RoundD128toInt** - Implementation needed
+- [ ] **Iop_RoundD64toInt** - Implementation needed
+- [ ] **Iop_RoundF128toInt** - Implementation needed
+- [ ] **Iop_RoundF32toInt** - Implementation needed
+- [ ] **Iop_RoundF32toIntA0** - Implementation needed
+- [ ] **Iop_RoundF32toIntE** - Implementation needed
+- [ ] **Iop_RoundF64toF32** - Implementation needed
+- [ ] **Iop_RoundF64toF64_PosINF** - Implementation needed
+- [ ] **Iop_RoundF64toF64_ZERO** - Implementation needed
+- [ ] **Iop_RoundF64toInt** - Implementation needed
+- [ ] **Iop_RoundF64toIntA0** - Implementation needed
+- [ ] **Iop_RoundF64toIntE** - Implementation needed
+- [ ] **Iop_SetV128lo32** - Implementation needed
+- [ ] **Iop_SetV128lo64** - Implementation needed
+- [ ] **Iop_TruncF128toI128S** - Implementation needed
+- [ ] **Iop_TruncF128toI128U** - Implementation needed
+- [ ] **Iop_TruncF128toI32S** - Implementation needed
+- [ ] **Iop_TruncF128toI32U** - Implementation needed
+- [ ] **Iop_TruncF128toI64S** - Implementation needed
+- [ ] **Iop_TruncF128toI64U** - Implementation needed
+- [ ] **Iop_TruncF64asF32** - Implementation needed
+- [ ] **Iop_V128HIto64** - Implementation needed
+- [ ] **Iop_V128to32** - Implementation needed
+- [ ] **Iop_V128to64** - Implementation needed
+- [ ] **Iop_V256to64_0** - Implementation needed
+- [ ] **Iop_V256to64_1** - Implementation needed
+- [ ] **Iop_V256to64_2** - Implementation needed
+- [ ] **Iop_V256to64_3** - Implementation needed
+- [ ] **Iop_V256toV128_0** - Implementation needed
+- [ ] **Iop_V256toV128_1** - Implementation needed
+- [ ] **Iop_Widen16Sto32x4** - Implementation needed
+- [ ] **Iop_Widen16Uto32x4** - Implementation needed
+- [ ] **Iop_Widen32Sto64x2** - Implementation needed
+- [ ] **Iop_Widen32Uto64x2** - Implementation needed
+- [ ] **Iop_Widen8Sto16x8** - Implementation needed
+- [ ] **Iop_Widen8Uto16x8** - Implementation needed
+- [ ] **Iop_ZeroHI112ofV128** - Implementation needed
+- [ ] **Iop_ZeroHI120ofV128** - Implementation needed
+- [ ] **Iop_ZeroHI64ofV128** - Implementation needed
+- [ ] **Iop_ZeroHI96ofV128** - Implementation needed
+
+### Shift and Rotate Operations
+
+- [ ] **Iop_QShl16x4** - Implementation needed
+- [ ] **Iop_QShl16x8** - Implementation needed
+- [ ] **Iop_QShl32x2** - Implementation needed
+- [ ] **Iop_QShl32x4** - Implementation needed
+- [ ] **Iop_QShl64x1** - Implementation needed
+- [ ] **Iop_QShl64x2** - Implementation needed
+- [ ] **Iop_QShl8x16** - Implementation needed
+- [ ] **Iop_QShl8x8** - Implementation needed
+- [ ] **Iop_QShlNsatSS16x4** - Implementation needed
+- [ ] **Iop_QShlNsatSS16x8** - Implementation needed
+- [ ] **Iop_QShlNsatSS32x2** - Implementation needed
+- [ ] **Iop_QShlNsatSS32x4** - Implementation needed
+- [ ] **Iop_QShlNsatSS64x1** - Implementation needed
+- [ ] **Iop_QShlNsatSS64x2** - Implementation needed
+- [ ] **Iop_QShlNsatSS8x16** - Implementation needed
+- [ ] **Iop_QShlNsatSS8x8** - Implementation needed
+- [ ] **Iop_QShlNsatSU16x4** - Implementation needed
+- [ ] **Iop_QShlNsatSU16x8** - Implementation needed
+- [ ] **Iop_QShlNsatSU32x2** - Implementation needed
+- [ ] **Iop_QShlNsatSU32x4** - Implementation needed
+- [ ] **Iop_QShlNsatSU64x1** - Implementation needed
+- [ ] **Iop_QShlNsatSU64x2** - Implementation needed
+- [ ] **Iop_QShlNsatSU8x16** - Implementation needed
+- [ ] **Iop_QShlNsatSU8x8** - Implementation needed
+- [ ] **Iop_QShlNsatUU16x4** - Implementation needed
+- [ ] **Iop_QShlNsatUU16x8** - Implementation needed
+- [ ] **Iop_QShlNsatUU32x2** - Implementation needed
+- [ ] **Iop_QShlNsatUU32x4** - Implementation needed
+- [ ] **Iop_QShlNsatUU64x1** - Implementation needed
+- [ ] **Iop_QShlNsatUU64x2** - Implementation needed
+- [ ] **Iop_QShlNsatUU8x16** - Implementation needed
+- [ ] **Iop_QShlNsatUU8x8** - Implementation needed
+- [ ] **Iop_Rol16x8** - Implementation needed
+- [ ] **Iop_Rol32x4** - Implementation needed
+- [ ] **Iop_Rol64x2** - Implementation needed
+- [ ] **Iop_Rol8x16** - Implementation needed
+- [x] **Iop_Sar16** - Implemented
+- [ ] **Iop_Sar16x4** - Implementation needed
+- [ ] **Iop_Sar16x8** - Implementation needed
+- [x] **Iop_Sar32** - Implemented
+- [ ] **Iop_Sar32x2** - Implementation needed
+- [ ] **Iop_Sar32x4** - Implementation needed
+- [x] **Iop_Sar64** - Implemented
+- [ ] **Iop_Sar64x2** - Implementation needed
+- [x] **Iop_Sar8** - Implemented
+- [ ] **Iop_Sar8x16** - Implementation needed
+- [ ] **Iop_Sar8x8** - Implementation needed
+- [ ] **Iop_SarN16x16** - Implementation needed
+- [ ] **Iop_SarN16x4** - Implementation needed
+- [ ] **Iop_SarN16x8** - Implementation needed
+- [ ] **Iop_SarN32x2** - Implementation needed
+- [ ] **Iop_SarN32x4** - Implementation needed
+- [ ] **Iop_SarN32x8** - Implementation needed
+- [ ] **Iop_SarN64x2** - Implementation needed
+- [ ] **Iop_SarN8x16** - Implementation needed
+- [ ] **Iop_SarN8x8** - Implementation needed
+- [ ] **Iop_SarV128** - Implementation needed
+- [x] **Iop_Shl16** - Implemented
+- [ ] **Iop_Shl16x4** - Implementation needed
+- [ ] **Iop_Shl16x8** - Implementation needed
+- [x] **Iop_Shl32** - Implemented
+- [ ] **Iop_Shl32x2** - Implementation needed
+- [ ] **Iop_Shl32x4** - Implementation needed
+- [x] **Iop_Shl64** - Implemented
+- [ ] **Iop_Shl64x2** - Implementation needed
+- [x] **Iop_Shl8** - Implemented
+- [ ] **Iop_Shl8x16** - Implementation needed
+- [ ] **Iop_Shl8x8** - Implementation needed
+- [ ] **Iop_ShlD128** - Implementation needed
+- [ ] **Iop_ShlD64** - Implementation needed
+- [ ] **Iop_ShlN16x16** - Implementation needed
+- [ ] **Iop_ShlN16x4** - Implementation needed
+- [ ] **Iop_ShlN16x8** - Implementation needed
+- [ ] **Iop_ShlN32x2** - Implementation needed
+- [ ] **Iop_ShlN32x4** - Implementation needed
+- [ ] **Iop_ShlN32x8** - Implementation needed
+- [ ] **Iop_ShlN64x2** - Implementation needed
+- [ ] **Iop_ShlN64x4** - Implementation needed
+- [ ] **Iop_ShlN8x16** - Implementation needed
+- [ ] **Iop_ShlN8x8** - Implementation needed
+- [ ] **Iop_ShlV128** - Implementation needed
+- [x] **Iop_Shr16** - Implemented
+- [ ] **Iop_Shr16x4** - Implementation needed
+- [ ] **Iop_Shr16x8** - Implementation needed
+- [x] **Iop_Shr32** - Implemented
+- [ ] **Iop_Shr32x2** - Implementation needed
+- [ ] **Iop_Shr32x4** - Implementation needed
+- [x] **Iop_Shr64** - Implemented
+- [ ] **Iop_Shr64x2** - Implementation needed
+- [x] **Iop_Shr8** - Implemented
+- [ ] **Iop_Shr8x16** - Implementation needed
+- [ ] **Iop_Shr8x8** - Implementation needed
+- [ ] **Iop_ShrD128** - Implementation needed
+- [ ] **Iop_ShrD64** - Implementation needed
+- [ ] **Iop_ShrN16x16** - Implementation needed
+- [ ] **Iop_ShrN16x4** - Implementation needed
+- [ ] **Iop_ShrN16x8** - Implementation needed
+- [ ] **Iop_ShrN32x2** - Implementation needed
+- [ ] **Iop_ShrN32x4** - Implementation needed
+- [ ] **Iop_ShrN32x8** - Implementation needed
+- [ ] **Iop_ShrN64x2** - Implementation needed
+- [ ] **Iop_ShrN64x4** - Implementation needed
+- [ ] **Iop_ShrN8x16** - Implementation needed
+- [ ] **Iop_ShrN8x8** - Implementation needed
+- [ ] **Iop_ShrV128** - Implementation needed
+
+### Floating Point Operations
+
+- [ ] **Iop_2xm1F64** - Implementation needed
+- [ ] **Iop_AbsF32** - Implementation needed
+- [ ] **Iop_AbsF64** - Implementation needed
+- [ ] **Iop_AtanF64** - Implementation needed
+- [ ] **Iop_CosF64** - Implementation needed
+- [ ] **Iop_DivF32** - Implementation needed
+- [ ] **Iop_DivF64** - Implementation needed
+- [ ] **Iop_DivF64r32** - Implementation needed
+- [ ] **Iop_MaxNumF32** - Implementation needed
+- [ ] **Iop_MaxNumF64** - Implementation needed
+- [ ] **Iop_MinNumF32** - Implementation needed
+- [ ] **Iop_MinNumF64** - Implementation needed
+- [ ] **Iop_MulF32** - Implementation needed
+- [ ] **Iop_MulF64** - Implementation needed
+- [ ] **Iop_MulF64r32** - Implementation needed
+- [ ] **Iop_PRem1C3210F64** - Implementation needed
+- [ ] **Iop_PRem1F64** - Implementation needed
+- [ ] **Iop_PRemC3210F64** - Implementation needed
+- [ ] **Iop_PRemF64** - Implementation needed
+- [ ] **Iop_RSqrtEst32F0x4** - Implementation needed
+- [ ] **Iop_RSqrtEst32Fx2** - Implementation needed
+- [ ] **Iop_RSqrtEst32Fx4** - Implementation needed
+- [ ] **Iop_RSqrtEst32Fx8** - Implementation needed
+- [ ] **Iop_RSqrtEst32Ux2** - Implementation needed
+- [ ] **Iop_RSqrtEst32Ux4** - Implementation needed
+- [ ] **Iop_RSqrtEst5GoodF64** - Implementation needed
+- [ ] **Iop_RSqrtEst64Fx2** - Implementation needed
+- [ ] **Iop_RSqrtStep32Fx2** - Implementation needed
+- [ ] **Iop_RSqrtStep32Fx4** - Implementation needed
+- [ ] **Iop_RSqrtStep64Fx2** - Implementation needed
+- [ ] **Iop_RecpExpF32** - Implementation needed
+- [ ] **Iop_RecpExpF64** - Implementation needed
+- [ ] **Iop_ReinterpF32asI32** - Implementation needed
+- [ ] **Iop_ReinterpF64asI64** - Implementation needed
+- [ ] **Iop_ReinterpI32asF32** - Implementation needed
+- [ ] **Iop_ReinterpI64asF64** - Implementation needed
+- [ ] **Iop_Reverse16sIn32_x2** - Implementation needed
+- [ ] **Iop_Reverse16sIn32_x4** - Implementation needed
+- [ ] **Iop_Reverse16sIn64_x1** - Implementation needed
+- [ ] **Iop_Reverse16sIn64_x2** - Implementation needed
+- [ ] **Iop_Reverse1sIn8_x16** - Implementation needed
+- [ ] **Iop_Reverse32sIn64_x1** - Implementation needed
+- [ ] **Iop_Reverse32sIn64_x2** - Implementation needed
+- [ ] **Iop_Reverse8sIn16_x4** - Implementation needed
+- [ ] **Iop_Reverse8sIn16_x8** - Implementation needed
+- [ ] **Iop_Reverse8sIn32_x1** - Implementation needed
+- [ ] **Iop_Reverse8sIn32_x2** - Implementation needed
+- [ ] **Iop_Reverse8sIn32_x4** - Implementation needed
+- [ ] **Iop_Reverse8sIn64_x1** - Implementation needed
+- [ ] **Iop_Reverse8sIn64_x2** - Implementation needed
+- [ ] **Iop_RoundF32x4_RM** - Implementation needed
+- [ ] **Iop_RoundF32x4_RN** - Implementation needed
+- [ ] **Iop_RoundF32x4_RP** - Implementation needed
+- [ ] **Iop_RoundF32x4_RZ** - Implementation needed
+- [ ] **Iop_SinF64** - Implementation needed
+- [ ] **Iop_Sqrt16Fx8** - Implementation needed
+- [ ] **Iop_Sqrt32F0x4** - Implementation needed
+- [ ] **Iop_Sqrt32Fx4** - Implementation needed
+- [ ] **Iop_Sqrt32Fx8** - Implementation needed
+- [ ] **Iop_Sqrt64F0x2** - Implementation needed
+- [ ] **Iop_Sqrt64Fx2** - Implementation needed
+- [ ] **Iop_Sqrt64Fx4** - Implementation needed
+- [ ] **Iop_SqrtF128** - Implementation needed
+- [ ] **Iop_SqrtF16** - Implementation needed
+- [ ] **Iop_SqrtF32** - Implementation needed
+- [ ] **Iop_SqrtF64** - Implementation needed
+- [ ] **Iop_TanF64** - Implementation needed
+- [ ] **Iop_Yl2xF64** - Implementation needed
+- [ ] **Iop_Yl2xp1F64** - Implementation needed
+
+### SIMD/Vector Operations
+
+- [ ] **Iop_Abs32Fx2** - Implementation needed
+- [ ] **Iop_Abs32Fx4** - Implementation needed
+- [ ] **Iop_Abs64Fx2** - Implementation needed
+- [ ] **Iop_CipherLV128** - Implementation needed
+- [ ] **Iop_CipherSV128** - Implementation needed
+- [ ] **Iop_CipherV128** - Implementation needed
+- [ ] **Iop_Div32Fx4** - Implementation needed
+- [ ] **Iop_Div64Fx2** - Implementation needed
+- [ ] **Iop_Div64Fx4** - Implementation needed
+- [ ] **Iop_Exp2_32Fx4** - Implementation needed
+- [ ] **Iop_Max32Fx2** - Implementation needed
+- [ ] **Iop_Max32Fx4** - Implementation needed
+- [ ] **Iop_Max64Fx2** - Implementation needed
+- [ ] **Iop_Max64Fx4** - Implementation needed
+- [ ] **Iop_Min32Fx2** - Implementation needed
+- [ ] **Iop_Min32Fx4** - Implementation needed
+- [ ] **Iop_Min64Fx2** - Implementation needed
+- [ ] **Iop_Min64Fx4** - Implementation needed
+- [ ] **Iop_Mul32Fx2** - Implementation needed
+- [ ] **Iop_Mul32Fx4** - Implementation needed
+- [ ] **Iop_Mul64Fx2** - Implementation needed
+- [ ] **Iop_Mul64Fx4** - Implementation needed
+- [ ] **Iop_NCipherLV128** - Implementation needed
+- [ ] **Iop_NCipherV128** - Implementation needed
+- [ ] **Iop_PwMax32Fx2** - Implementation needed
+- [ ] **Iop_PwMax32Fx4** - Implementation needed
+- [ ] **Iop_PwMin32Fx2** - Implementation needed
+- [ ] **Iop_PwMin32Fx4** - Implementation needed
+- [ ] **Iop_RecipEst32Fx2** - Implementation needed
+- [ ] **Iop_RecipEst32Fx4** - Implementation needed
+- [ ] **Iop_RecipEst64Fx2** - Implementation needed
+- [ ] **Iop_RecipStep32Fx2** - Implementation needed
+- [ ] **Iop_RecipStep32Fx4** - Implementation needed
+- [ ] **Iop_RecipStep64Fx2** - Implementation needed
+- [ ] **Iop_ReinterpI128asV128** - Implementation needed
+- [ ] **Iop_ReinterpV128asI128** - Implementation needed
+- [ ] **Iop_SliceV128** - Implementation needed
+
+### Division Operations
+
+- [ ] **Iop_Div32F0x4** - Implementation needed
+- [ ] **Iop_Div32Fx8** - Implementation needed
+- [ ] **Iop_Div64F0x2** - Implementation needed
+- [ ] **Iop_DivD128** - Implementation needed
+- [ ] **Iop_DivD64** - Implementation needed
+- [ ] **Iop_DivF128** - Implementation needed
+- [ ] **Iop_DivS128** - Implementation needed
+- [ ] **Iop_DivS128E** - Implementation needed
+- [ ] **Iop_DivS32** - Implementation needed
+- [ ] **Iop_DivS32E** - Implementation needed
+- [ ] **Iop_DivS64** - Implementation needed
+- [ ] **Iop_DivS64E** - Implementation needed
+- [ ] **Iop_DivU128** - Implementation needed
+- [ ] **Iop_DivU128E** - Implementation needed
+- [ ] **Iop_DivU32** - Implementation needed
+- [ ] **Iop_DivU32E** - Implementation needed
+- [ ] **Iop_DivU64** - Implementation needed
+- [ ] **Iop_DivU64E** - Implementation needed
+- [ ] **Iop_ModS128** - Implementation needed
+- [ ] **Iop_ModU128** - Implementation needed
+
+### Multiplication Operations
+
+- [x] **Iop_Mul16** - Implemented
+- [ ] **Iop_Mul16x16** - Implementation needed
+- [ ] **Iop_Mul16x4** - Implementation needed
+- [ ] **Iop_Mul16x8** - Implementation needed
+- [x] **Iop_Mul32** - Implemented
+- [ ] **Iop_Mul32F0x4** - Implementation needed
+- [ ] **Iop_Mul32Fx8** - Implementation needed
+- [ ] **Iop_Mul32x2** - Implementation needed
+- [ ] **Iop_Mul32x4** - Implementation needed
+- [ ] **Iop_Mul32x8** - Implementation needed
+- [x] **Iop_Mul64** - Implemented
+- [ ] **Iop_Mul64F0x2** - Implementation needed
+- [x] **Iop_Mul8** - Implemented
+- [ ] **Iop_Mul8x16** - Implementation needed
+- [ ] **Iop_Mul8x8** - Implementation needed
+- [ ] **Iop_MulD128** - Implementation needed
+- [ ] **Iop_MulD64** - Implementation needed
+- [ ] **Iop_MulF128** - Implementation needed
+- [ ] **Iop_MulI128by10** - Implementation needed
+- [ ] **Iop_MulI128by10Carry** - Implementation needed
+- [ ] **Iop_MulI128by10E** - Implementation needed
+- [ ] **Iop_MulI128by10ECarry** - Implementation needed
+- [ ] **Iop_Mull16Sx4** - Implementation needed
+- [ ] **Iop_Mull16Ux4** - Implementation needed
+- [ ] **Iop_Mull32Sx2** - Implementation needed
+- [ ] **Iop_Mull32Ux2** - Implementation needed
+- [ ] **Iop_Mull8Sx8** - Implementation needed
+- [ ] **Iop_Mull8Ux8** - Implementation needed
+- [x] **Iop_MullS16** - Implemented
+- [x] **Iop_MullS32** - Implemented
+- [x] **Iop_MullS64** - Implemented
+- [x] **Iop_MullS8** - Implemented
+- [x] **Iop_MullU16** - Implemented
+- [x] **Iop_MullU32** - Implemented
+- [x] **Iop_MullU64** - Implemented
+- [x] **Iop_MullU8** - Implemented
+- [ ] **Iop_PolynomialMul8x16** - Implementation needed
+- [ ] **Iop_PolynomialMul8x8** - Implementation needed
+- [ ] **Iop_PolynomialMull8x8** - Implementation needed
+- [ ] **Iop_QDMull16Sx4** - Implementation needed
+- [ ] **Iop_QDMull32Sx2** - Implementation needed
+
+### Other Operations
+
+- [ ] **Iop_Abs16Fx8** - Implementation needed
+- [ ] **Iop_Abs16x4** - Implementation needed
+- [ ] **Iop_Abs16x8** - Implementation needed
+- [ ] **Iop_Abs32x2** - Implementation needed
+- [ ] **Iop_Abs32x4** - Implementation needed
+- [ ] **Iop_Abs64x2** - Implementation needed
+- [ ] **Iop_Abs8x16** - Implementation needed
+- [ ] **Iop_Abs8x8** - Implementation needed
+- [ ] **Iop_AbsF128** - Implementation needed
+- [ ] **Iop_AbsF16** - Implementation needed
+- [ ] **Iop_Avg16Sx8** - Implementation needed
+- [ ] **Iop_Avg16Ux16** - Implementation needed
+- [ ] **Iop_Avg16Ux4** - Implementation needed
+- [ ] **Iop_Avg16Ux8** - Implementation needed
+- [ ] **Iop_Avg32Sx4** - Implementation needed
+- [ ] **Iop_Avg32Ux4** - Implementation needed
+- [ ] **Iop_Avg64Sx2** - Implementation needed
+- [ ] **Iop_Avg64Ux2** - Implementation needed
+- [ ] **Iop_Avg8Sx16** - Implementation needed
+- [ ] **Iop_Avg8Ux16** - Implementation needed
+- [ ] **Iop_Avg8Ux32** - Implementation needed
+- [ ] **Iop_Avg8Ux8** - Implementation needed
+- [ ] **Iop_Cls16x4** - Implementation needed
+- [ ] **Iop_Cls16x8** - Implementation needed
+- [ ] **Iop_Cls32x2** - Implementation needed
+- [ ] **Iop_Cls32x4** - Implementation needed
+- [ ] **Iop_Cls8x16** - Implementation needed
+- [ ] **Iop_Cls8x8** - Implementation needed
+- [ ] **Iop_Clz16x4** - Implementation needed
+- [ ] **Iop_Clz16x8** - Implementation needed
+- [ ] **Iop_Clz32** - Implementation needed
+- [ ] **Iop_Clz32x2** - Implementation needed
+- [ ] **Iop_Clz32x4** - Implementation needed
+- [ ] **Iop_Clz64** - Implementation needed
+- [ ] **Iop_Clz64x2** - Implementation needed
+- [ ] **Iop_Clz8x16** - Implementation needed
+- [ ] **Iop_Clz8x8** - Implementation needed
+- [ ] **Iop_ClzNat32** - Implementation needed
+- [ ] **Iop_ClzNat64** - Implementation needed
+- [ ] **Iop_Cnt8x16** - Implementation needed
+- [ ] **Iop_Cnt8x8** - Implementation needed
+- [ ] **Iop_Ctz16x8** - Implementation needed
+- [ ] **Iop_Ctz32** - Implementation needed
+- [ ] **Iop_Ctz32x4** - Implementation needed
+- [ ] **Iop_Ctz64** - Implementation needed
+- [ ] **Iop_Ctz64x2** - Implementation needed
+- [ ] **Iop_Ctz8x16** - Implementation needed
+- [ ] **Iop_CtzNat32** - Implementation needed
+- [ ] **Iop_CtzNat64** - Implementation needed
+- [ ] **Iop_Dup16x4** - Implementation needed
+- [ ] **Iop_Dup16x8** - Implementation needed
+- [ ] **Iop_Dup32x2** - Implementation needed
+- [ ] **Iop_Dup32x4** - Implementation needed
+- [ ] **Iop_Dup8x16** - Implementation needed
+- [ ] **Iop_Dup8x8** - Implementation needed
+- [ ] **Iop_ExtractExpD128** - Implementation needed
+- [ ] **Iop_ExtractExpD64** - Implementation needed
+- [ ] **Iop_ExtractSigD128** - Implementation needed
+- [ ] **Iop_ExtractSigD64** - Implementation needed
+- [ ] **Iop_InsertExpD128** - Implementation needed
+- [ ] **Iop_InsertExpD64** - Implementation needed
+- [ ] **Iop_Max16Sx16** - Implementation needed
+- [ ] **Iop_Max16Sx4** - Implementation needed
+- [ ] **Iop_Max16Sx8** - Implementation needed
+- [ ] **Iop_Max16Ux16** - Implementation needed
+- [ ] **Iop_Max16Ux4** - Implementation needed
+- [ ] **Iop_Max16Ux8** - Implementation needed
+- [ ] **Iop_Max32F0x4** - Implementation needed
+- [ ] **Iop_Max32Fx8** - Implementation needed
+- [ ] **Iop_Max32Sx2** - Implementation needed
+- [ ] **Iop_Max32Sx4** - Implementation needed
+- [ ] **Iop_Max32Sx8** - Implementation needed
+- [ ] **Iop_Max32U** - Implementation needed
+- [ ] **Iop_Max32Ux2** - Implementation needed
+- [ ] **Iop_Max32Ux4** - Implementation needed
+- [ ] **Iop_Max32Ux8** - Implementation needed
+- [ ] **Iop_Max64F0x2** - Implementation needed
+- [ ] **Iop_Max64Sx2** - Implementation needed
+- [ ] **Iop_Max64Ux2** - Implementation needed
+- [ ] **Iop_Max8Sx16** - Implementation needed
+- [ ] **Iop_Max8Sx32** - Implementation needed
+- [ ] **Iop_Max8Sx8** - Implementation needed
+- [ ] **Iop_Max8Ux16** - Implementation needed
+- [ ] **Iop_Max8Ux32** - Implementation needed
+- [ ] **Iop_Max8Ux8** - Implementation needed
+- [ ] **Iop_Min16Sx16** - Implementation needed
+- [ ] **Iop_Min16Sx4** - Implementation needed
+- [ ] **Iop_Min16Sx8** - Implementation needed
+- [ ] **Iop_Min16Ux16** - Implementation needed
+- [ ] **Iop_Min16Ux4** - Implementation needed
+- [ ] **Iop_Min16Ux8** - Implementation needed
+- [ ] **Iop_Min32F0x4** - Implementation needed
+- [ ] **Iop_Min32Fx8** - Implementation needed
+- [ ] **Iop_Min32Sx2** - Implementation needed
+- [ ] **Iop_Min32Sx4** - Implementation needed
+- [ ] **Iop_Min32Sx8** - Implementation needed
+- [ ] **Iop_Min32Ux2** - Implementation needed
+- [ ] **Iop_Min32Ux4** - Implementation needed
+- [ ] **Iop_Min32Ux8** - Implementation needed
+- [ ] **Iop_Min64F0x2** - Implementation needed
+- [ ] **Iop_Min64Sx2** - Implementation needed
+- [ ] **Iop_Min64Ux2** - Implementation needed
+- [ ] **Iop_Min8Sx16** - Implementation needed
+- [ ] **Iop_Min8Sx32** - Implementation needed
+- [ ] **Iop_Min8Sx8** - Implementation needed
+- [ ] **Iop_Min8Ux16** - Implementation needed
+- [ ] **Iop_Min8Ux32** - Implementation needed
+- [ ] **Iop_Min8Ux8** - Implementation needed
+- [ ] **Iop_Perm32x4** - Implementation needed
+- [ ] **Iop_Perm32x8** - Implementation needed
+- [ ] **Iop_Perm8x16** - Implementation needed
+- [ ] **Iop_Perm8x16x2** - Implementation needed
+- [ ] **Iop_Perm8x8** - Implementation needed
+- [ ] **Iop_PopCount32** - Implementation needed
+- [ ] **Iop_PopCount64** - Implementation needed
+- [ ] **Iop_PwBitMtxXpose64x2** - Implementation needed
+- [ ] **Iop_PwMax16Sx4** - Implementation needed
+- [ ] **Iop_PwMax16Ux4** - Implementation needed
+- [ ] **Iop_PwMax32Sx2** - Implementation needed
+- [ ] **Iop_PwMax32Ux2** - Implementation needed
+- [ ] **Iop_PwMax8Sx8** - Implementation needed
+- [ ] **Iop_PwMax8Ux8** - Implementation needed
+- [ ] **Iop_PwMin16Sx4** - Implementation needed
+- [ ] **Iop_PwMin16Ux4** - Implementation needed
+- [ ] **Iop_PwMin32Sx2** - Implementation needed
+- [ ] **Iop_PwMin32Ux2** - Implementation needed
+- [ ] **Iop_PwMin8Sx8** - Implementation needed
+- [ ] **Iop_PwMin8Ux8** - Implementation needed
+- [ ] **Iop_QSal16x4** - Implementation needed
+- [ ] **Iop_QSal16x8** - Implementation needed
+- [ ] **Iop_QSal32x2** - Implementation needed
+- [ ] **Iop_QSal32x4** - Implementation needed
+- [ ] **Iop_QSal64x1** - Implementation needed
+- [ ] **Iop_QSal64x2** - Implementation needed
+- [ ] **Iop_QSal8x16** - Implementation needed
+- [ ] **Iop_QSal8x8** - Implementation needed
+- [ ] **Iop_QuantizeD128** - Implementation needed
+- [ ] **Iop_QuantizeD64** - Implementation needed
+- [ ] **Iop_RecipEst32F0x4** - Implementation needed
+- [ ] **Iop_RecipEst32Fx8** - Implementation needed
+- [ ] **Iop_RecipEst32Ux2** - Implementation needed
+- [ ] **Iop_RecipEst32Ux4** - Implementation needed
+- [ ] **Iop_ReinterpD64asI64** - Implementation needed
+- [ ] **Iop_ReinterpF128asI128** - Implementation needed
+- [ ] **Iop_ReinterpI128asF128** - Implementation needed
+- [ ] **Iop_ReinterpI64asD64** - Implementation needed
+- [ ] **Iop_RndF128** - Implementation needed
+- [ ] **Iop_Rotx32** - Implementation needed
+- [ ] **Iop_Rotx64** - Implementation needed
+- [ ] **Iop_Rsh16Sx8** - Implementation needed
+- [ ] **Iop_Rsh16Ux8** - Implementation needed
+- [ ] **Iop_Rsh32Sx4** - Implementation needed
+- [ ] **Iop_Rsh32Ux4** - Implementation needed
+- [ ] **Iop_Rsh64Sx2** - Implementation needed
+- [ ] **Iop_Rsh64Ux2** - Implementation needed
+- [ ] **Iop_Rsh8Sx16** - Implementation needed
+- [ ] **Iop_Rsh8Ux16** - Implementation needed
+- [ ] **Iop_SHA256** - Implementation needed
+- [ ] **Iop_SHA512** - Implementation needed
+- [ ] **Iop_Sad8Ux4** - Implementation needed
+- [ ] **Iop_Sal16x4** - Implementation needed
+- [ ] **Iop_Sal16x8** - Implementation needed
+- [ ] **Iop_Sal32x2** - Implementation needed
+- [ ] **Iop_Sal32x4** - Implementation needed
+- [ ] **Iop_Sal64x1** - Implementation needed
+- [ ] **Iop_Sal64x2** - Implementation needed
+- [ ] **Iop_Sal8x16** - Implementation needed
+- [ ] **Iop_Sal8x8** - Implementation needed
+- [ ] **Iop_Sh16Sx8** - Implementation needed
+- [ ] **Iop_Sh16Ux8** - Implementation needed
+- [ ] **Iop_Sh32Sx4** - Implementation needed
+- [ ] **Iop_Sh32Ux4** - Implementation needed
+- [ ] **Iop_Sh64Sx2** - Implementation needed
+- [ ] **Iop_Sh64Ux2** - Implementation needed
+- [ ] **Iop_Sh8Sx16** - Implementation needed
+- [ ] **Iop_Sh8Ux16** - Implementation needed
+- [ ] **Iop_SignificanceRoundD128** - Implementation needed
+- [ ] **Iop_SignificanceRoundD64** - Implementation needed
+- [ ] **Iop_Slice64** - Implementation needed
