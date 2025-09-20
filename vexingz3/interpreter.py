@@ -1,5 +1,13 @@
 import pyvex
 
+# Mapping from VEX type to bit width
+TYPE_TO_BITWIDTH = {
+    "Ity_I8": 8,
+    "Ity_I16": 16,
+    "Ity_I32": 32,
+    "Ity_I64": 64,
+}
+
 
 class State:
     def __init__(self, registers=None):
@@ -32,28 +40,15 @@ class State:
                 reg_offset = stmt.offset
                 reg_name = irsb.arch.register_names.get(reg_offset)
                 value = self._eval_expression(stmt.data, irsb.arch)
-                if reg_name:
-                    # Check if this is a sub-register operation
-                    data_type = stmt.data.result_type(irsb.tyenv)
-                    if data_type == "Ity_I8":
-                        # 8-bit operation: splice into existing register
-                        current_value = self.get_register(reg_name)
-                        # Clear low 8 bits and set new value
-                        new_value = (current_value & ~0xFF) | (value & 0xFF)
-                        self.set_register(reg_name, new_value)
-                    elif data_type == "Ity_I16":
-                        # 16-bit operation: splice into existing register
-                        current_value = self.get_register(reg_name)
-                        # Clear low 16 bits and set new value
-                        new_value = (current_value & ~0xFFFF) | (value & 0xFFFF)
-                        self.set_register(reg_name, new_value)
-                    elif data_type == "Ity_I32":
-                        # 32-bit operation in x86-64: zero upper 32 bits
-                        # This is a special case for x86-64 architecture
-                        self.set_register(reg_name, value & 0xFFFFFFFF)
-                    else:
-                        # Full register operation
-                        self.set_register(reg_name, value)
+                if reg_name is None:
+                    raise NotImplementedError(f"Unknown register offset {reg_offset}")
+                # Splice value into register based on data type
+                data_type = stmt.data.result_type(irsb.tyenv)
+                bitwidth = TYPE_TO_BITWIDTH.get(data_type, 64)
+                current_value = self.get_register(reg_name)
+                mask = (1 << bitwidth) - 1
+                new_value = (current_value & ~mask) | (value & mask)
+                self.set_register(reg_name, new_value)
 
     def _eval_expression(self, expr, arch):
         if isinstance(expr, pyvex.expr.Get):
@@ -62,14 +57,9 @@ class State:
             if reg_name:
                 reg_value = self.get_register(reg_name)
                 # Extract bits based on type
-                if expr.ty == "Ity_I8":
-                    return self._mask(reg_value, 8)
-                elif expr.ty == "Ity_I16":
-                    return self._mask(reg_value, 16)
-                elif expr.ty == "Ity_I32":
-                    return self._mask(reg_value, 32)
-                elif expr.ty == "Ity_I64":
-                    return self._mask(reg_value, 64)
+                bitwidth = TYPE_TO_BITWIDTH.get(expr.ty)
+                if bitwidth:
+                    return self._mask(reg_value, bitwidth)
                 else:
                     return reg_value
             return 0
