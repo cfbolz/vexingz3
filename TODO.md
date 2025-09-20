@@ -2,7 +2,7 @@
 
 ## Next x86 Instructions to Implement
 
-- [ ] **MUL (multiply)** - Implement multiplication operations (`Iop_Mul8/16/32/64`) with proper overflow handling
+- [x] **MUL (multiply)** - Implement multiplication operations (`Iop_Mul8/16/32/64`) with proper overflow handling
 
 - [x] **MOV with immediate values** - Support instructions like `mov rax, 0x1234` for constant loading
 

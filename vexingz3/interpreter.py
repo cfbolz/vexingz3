@@ -144,6 +144,36 @@ class State:
     def _binop_Iop_Xor64(self, expr, left, right):
         return self._mask(left ^ right, 64)
 
+    def _binop_Iop_Mul8(self, expr, left, right):
+        return self._mask(left * right, 8)
+
+    def _binop_Iop_Mul16(self, expr, left, right):
+        return self._mask(left * right, 16)
+
+    def _binop_Iop_Mul32(self, expr, left, right):
+        return self._mask(left * right, 32)
+
+    def _binop_Iop_Mul64(self, expr, left, right):
+        return self._mask(left * right, 64)
+
+    def _binop_Iop_MullU8(self, expr, left, right):
+        # Unsigned multiply: 8-bit * 8-bit -> 16-bit result
+        left_8 = self._mask(left, 8)
+        right_8 = self._mask(right, 8)
+        return left_8 * right_8  # No need to mask, result fits in 16 bits
+
+    def _binop_Iop_MullU16(self, expr, left, right):
+        # Unsigned multiply: 16-bit * 16-bit -> 32-bit result
+        left_16 = self._mask(left, 16)
+        right_16 = self._mask(right, 16)
+        return left_16 * right_16  # No need to mask, result fits in 32 bits
+
+    def _binop_Iop_MullU32(self, expr, left, right):
+        # Unsigned multiply: 32-bit * 32-bit -> 64-bit result
+        left_32 = self._mask(left, 32)
+        right_32 = self._mask(right, 32)
+        return left_32 * right_32  # No need to mask, result fits in 64 bits
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
 
@@ -158,6 +188,15 @@ class State:
 
     def _unop_Iop_8Uto64(self, expr, arg):
         return self._mask(arg, 8)  # zero-extend to 64 bits (already done by mask)
+
+    def _unop_Iop_64HIto32(self, expr, arg):
+        return self._mask(arg >> 32, 32)  # Extract high 32 bits
+
+    def _unop_Iop_32HIto16(self, expr, arg):
+        return self._mask(arg >> 16, 16)  # Extract high 16 bits
+
+    def _unop_Iop_32to16(self, expr, arg):
+        return self._mask(arg, 16)  # Extract low 16 bits
 
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")

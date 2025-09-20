@@ -106,3 +106,49 @@ def test_mov_immediate_zero():
     # mov rax, 0x0
     output_state = run("48c7c000000000", rax=0xFFFFFFFFFFFFFFFF)
     check_output(output_state, rax=0x0)
+
+
+def test_imul64_rax_rbx():
+    # imul rax, rbx (signed multiply)
+    output_state = run("480fafc3", rax=6, rbx=7)
+    check_output(output_state, rax=42, rbx=7)
+
+
+def test_mul64_overflow():
+    # imul rax, rbx - Test 64-bit multiply overflow wrapping
+    output_state = run("480fafc3", rax=0xFFFFFFFFFFFFFFFF, rbx=2)
+    check_output(output_state, rax=0xFFFFFFFFFFFFFFFE, rbx=2)
+
+
+def test_mul32_unsigned():
+    # mul ebx (unsigned multiply eax * ebx -> edx:eax)
+    output_state = run("f7e3", rax=0x12345678, rbx=0x9ABCDEF0)
+    # Result should be in edx:eax (high:low parts of 64-bit result)
+    expected_result = (0x12345678 & 0xFFFFFFFF) * (0x9ABCDEF0 & 0xFFFFFFFF)
+    expected_low = expected_result & 0xFFFFFFFF
+    expected_high = (expected_result >> 32) & 0xFFFFFFFF
+    check_output(output_state, rax=expected_low, rdx=expected_high)
+
+
+def test_mul32_maximum_values():
+    # Test multiplication of maximum 32-bit values
+    output_state = run("f7e3", rax=0xFFFFFFFF, rbx=0xFFFFFFFF)
+    # 0xFFFFFFFF * 0xFFFFFFFF = 0xFFFFFFFE00000001
+    check_output(output_state, rax=0x00000001, rdx=0xFFFFFFFE)
+
+
+def test_mul8_al_bl():
+    # mul bl (8-bit multiply al * bl -> ax)
+    output_state = run("f6e3", rax=0x12345678ABCDEF05, rbx=0x9876543210FEDC0A)
+    # al=0x05, bl=0x0A -> ax=0x0032 (5 * 10 = 50 = 0x32)
+    check_output(output_state, rax=0x12345678ABCD0032, rbx=0x9876543210FEDC0A)
+
+
+def test_mul16_ax_bx():
+    # mul bx (16-bit multiply ax * bx -> dx:ax)
+    output_state = run("66f7e3", rax=0x12345678ABCD1234, rbx=0x9876543210FE5678)
+    # ax=0x1234, bx=0x5678 -> result=0x06260060, dx=0x0626, ax=0x0060
+    expected_result = 0x1234 * 0x5678
+    expected_low = expected_result & 0xFFFF
+    expected_high = (expected_result >> 16) & 0xFFFF
+    check_output(output_state, rax=0x12345678ABCD0000 | expected_low, rdx=expected_high)
