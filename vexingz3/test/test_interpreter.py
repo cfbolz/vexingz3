@@ -172,3 +172,74 @@ def test_sub32_eax_ebx():
     # 32-bit operations zero upper 32 bits: 0x0000000050000000
     assert output_state["rax"] == 0x0000000050000000
     assert output_state["rbx"] == 0x12345678930000000  # rbx unchanged
+
+
+def test_and64_rax_rbx():
+    AND64_INSTRUCTION = "4821d8"  # and rax, rbx
+    inp = bytes.fromhex(AND64_INSTRUCTION)
+    irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
+
+    input_state = {
+        "rax": 0xFF00FF00FF00FF00,
+        "rbx": 0xF0F0F0F0F0F0F0F0,
+    }
+
+    output_state = interpret(irsb, input_state)
+
+    # expected: AND operation: 0xFF00FF00FF00FF00 & 0xF0F0F0F0F0F0F0F0
+    # = 0xF000F000F000F000
+    assert output_state["rax"] == 0xF000F000F000F000
+    assert output_state["rbx"] == 0xF0F0F0F0F0F0F0F0  # rbx unchanged
+
+
+def test_and8_al_bl():
+    AND8_INSTRUCTION = "20d8"  # and al, bl
+    inp = bytes.fromhex(AND8_INSTRUCTION)
+    irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
+
+    input_state = {
+        "rax": 0x12345678ABCDEFFF,  # al = 0xFF
+        "rbx": 0x9876543210FEDC0F,  # bl = 0x0F
+    }
+
+    output_state = interpret(irsb, input_state)
+
+    # expected: al should be 0xFF & 0x0F = 0x0F
+    assert output_state["rax"] == 0x12345678ABCDEF0F
+    assert output_state["rbx"] == 0x9876543210FEDC0F  # rbx unchanged
+
+
+def test_or64_rax_rbx():
+    OR64_INSTRUCTION = "4809d8"  # or rax, rbx
+    inp = bytes.fromhex(OR64_INSTRUCTION)
+    irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
+
+    input_state = {
+        "rax": 0xFF00FF00FF00FF00,
+        "rbx": 0x0F0F0F0F0F0F0F0F,
+    }
+
+    output_state = interpret(irsb, input_state)
+
+    # expected: OR operation: 0xFF00FF00FF00FF00 | 0x0F0F0F0F0F0F0F0F
+    # = 0xFF0FFF0FFF0FFF0F
+    assert output_state["rax"] == 0xFF0FFF0FFF0FFF0F
+    assert output_state["rbx"] == 0x0F0F0F0F0F0F0F0F  # rbx unchanged
+
+
+def test_xor64_rax_rbx():
+    XOR64_INSTRUCTION = "4831d8"  # xor rax, rbx
+    inp = bytes.fromhex(XOR64_INSTRUCTION)
+    irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
+
+    input_state = {
+        "rax": 0xFF00FF00FF00FF00,
+        "rbx": 0xF0F0F0F0F0F0F0F0,
+    }
+
+    output_state = interpret(irsb, input_state)
+
+    # expected: XOR operation: 0xFF00FF00FF00FF00 ^ 0xF0F0F0F0F0F0F0F0
+    # = 0x0FF00FF00FF00FF0
+    assert output_state["rax"] == 0x0FF00FF00FF00FF0
+    assert output_state["rbx"] == 0xF0F0F0F0F0F0F0F0  # rbx unchanged

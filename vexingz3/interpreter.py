@@ -108,6 +108,42 @@ class State:
     def _binop_Iop_Add32(self, expr, left, right):
         return self._mask(left + right, 32)
 
+    def _binop_Iop_And8(self, expr, left, right):
+        return self._mask(left & right, 8)
+
+    def _binop_Iop_And16(self, expr, left, right):
+        return self._mask(left & right, 16)
+
+    def _binop_Iop_And32(self, expr, left, right):
+        return self._mask(left & right, 32)
+
+    def _binop_Iop_And64(self, expr, left, right):
+        return self._mask(left & right, 64)
+
+    def _binop_Iop_Or8(self, expr, left, right):
+        return self._mask(left | right, 8)
+
+    def _binop_Iop_Or16(self, expr, left, right):
+        return self._mask(left | right, 16)
+
+    def _binop_Iop_Or32(self, expr, left, right):
+        return self._mask(left | right, 32)
+
+    def _binop_Iop_Or64(self, expr, left, right):
+        return self._mask(left | right, 64)
+
+    def _binop_Iop_Xor8(self, expr, left, right):
+        return self._mask(left ^ right, 8)
+
+    def _binop_Iop_Xor16(self, expr, left, right):
+        return self._mask(left ^ right, 16)
+
+    def _binop_Iop_Xor32(self, expr, left, right):
+        return self._mask(left ^ right, 32)
+
+    def _binop_Iop_Xor64(self, expr, left, right):
+        return self._mask(left ^ right, 64)
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
 
