@@ -950,3 +950,74 @@ def test_divss_single_precision():
 
     output_state = run("f30f5ec1", ymm0=val1_int, ymm1=val2_int)
     check_output(output_state, ymm0=expected_int)
+
+
+def test_pand_128bit():
+    # pand xmm0, xmm1 - 128-bit bitwise AND
+    val1 = 0x12345678ABCDEF9876543210FEDCBA98
+    val2 = 0xF0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0
+    expected = val1 & val2
+
+    output_state = run("660fdbc1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_por_128bit():
+    # por xmm0, xmm1 - 128-bit bitwise OR
+    val1 = 0x12345678ABCDEF9876543210FEDCBA98
+    val2 = 0x0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F
+    expected = val1 | val2
+
+    output_state = run("660febc1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_pxor_128bit():
+    # pxor xmm0, xmm1 - 128-bit bitwise XOR
+    val1 = 0x12345678ABCDEF9876543210FEDCBA98
+    val2 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+    expected = val1 ^ val2
+
+    output_state = run("660fefc1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_pandn_128bit():
+    # pandn xmm0, xmm1 - 128-bit AND NOT (NOT xmm0, then AND with xmm1)
+    val1 = 0x12345678ABCDEF9876543210FEDCBA98
+    val2 = 0xF0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0
+    # pandn does: (~val1) & val2
+    expected = (~val1) & val2 & ((1 << 128) - 1)
+
+    output_state = run("660fdfc1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_vpand_256bit():
+    # vpand ymm0, ymm1, ymm2 - 256-bit bitwise AND
+    val1 = 0x12345678ABCDEF9876543210FEDCBA9887654321FEDCBA9876543210ABCDEF98
+    val2 = 0xF0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0
+    expected = val1 & val2
+
+    output_state = run("c5f5dbc2", ymm1=val1, ymm2=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_vpor_256bit():
+    # vpor ymm0, ymm1, ymm2 - 256-bit bitwise OR
+    val1 = 0x12345678ABCDEF9876543210FEDCBA9887654321FEDCBA9876543210ABCDEF98
+    val2 = 0x0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F
+    expected = val1 | val2
+
+    output_state = run("c5f5ebc2", ymm1=val1, ymm2=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_vpxor_256bit():
+    # vpxor ymm0, ymm1, ymm2 - 256-bit bitwise XOR
+    val1 = 0x12345678ABCDEF9876543210FEDCBA9887654321FEDCBA9876543210ABCDEF98
+    val2 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+    expected = val1 ^ val2
+
+    output_state = run("c5f5efc2", ymm1=val1, ymm2=val2)
+    check_output(output_state, ymm0=expected)

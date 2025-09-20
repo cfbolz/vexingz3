@@ -9,6 +9,7 @@ TYPE_TO_BITWIDTH = {
     "Ity_I32": 32,
     "Ity_I64": 64,
     "Ity_V128": 128,
+    "Ity_V256": 256,
 }
 
 
@@ -557,6 +558,32 @@ class State:
         # Single precision floating point divide on lane 0 of 4 lanes
         return self._float_binop_32f0x4(left, right, lambda x, y: x / y)
 
+    # 128-bit packed logical operations
+    def _binop_Iop_AndV128(self, expr, left, right):
+        # 128-bit bitwise AND - operates on entire 128-bit values
+        return left & right
+
+    def _binop_Iop_OrV128(self, expr, left, right):
+        # 128-bit bitwise OR - operates on entire 128-bit values
+        return left | right
+
+    def _binop_Iop_XorV128(self, expr, left, right):
+        # 128-bit bitwise XOR - operates on entire 128-bit values
+        return left ^ right
+
+    # 256-bit packed logical operations
+    def _binop_Iop_AndV256(self, expr, left, right):
+        # 256-bit bitwise AND - operates on entire 256-bit values
+        return left & right
+
+    def _binop_Iop_OrV256(self, expr, left, right):
+        # 256-bit bitwise OR - operates on entire 256-bit values
+        return left | right
+
+    def _binop_Iop_XorV256(self, expr, left, right):
+        # 256-bit bitwise XOR - operates on entire 256-bit values
+        return left ^ right
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
 
@@ -637,6 +664,10 @@ class State:
 
     def _unop_Iop_64to1(self, expr, arg):
         return self._mask(arg, 1)  # Extract low 1 bit
+
+    def _unop_Iop_NotV128(self, expr, arg):
+        # 128-bit bitwise NOT - complement all bits
+        return (~arg) & ((1 << 128) - 1)
 
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")
