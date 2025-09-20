@@ -115,3 +115,60 @@ def test_add32_eax_ebx():
     # rax should be 0x00000000acf13568
     assert output_state["rax"] == 0x00000000ACF13568
     assert output_state["rbx"] == 0x123456789ABCDEF0  # rbx unchanged
+
+
+def test_sub8_al_bl():
+    SUB8_INSTRUCTION = "28d8"  # sub al, bl
+    inp = bytes.fromhex(SUB8_INSTRUCTION)
+    irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
+
+    # input state: al=0x80, bl=0x30
+    input_state = {
+        "rax": 0x12345678ABCDEF80,  # al = 0x80
+        "rbx": 0x9876543210FEDC30,  # bl = 0x30
+    }
+
+    output_state = interpret(irsb, input_state)
+
+    # expected: al should be 0x80 - 0x30 = 0x50
+    # rax should have only al updated: 0x12345678abcdef50
+    assert output_state["rax"] == 0x12345678ABCDEF50
+    assert output_state["rbx"] == 0x9876543210FEDC30  # rbx unchanged
+
+
+def test_sub16_ax_bx():
+    SUB16_INSTRUCTION = "6629d8"  # sub ax, bx (16-bit)
+    inp = bytes.fromhex(SUB16_INSTRUCTION)
+    irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
+
+    # input state: ax=0x8000, bx=0x3000
+    input_state = {
+        "rax": 0x12345678ABCD8000,  # ax = 0x8000
+        "rbx": 0x9876543210FE3000,  # bx = 0x3000
+    }
+
+    output_state = interpret(irsb, input_state)
+
+    # expected: ax should be 0x8000 - 0x3000 = 0x5000
+    # rax should have only ax updated: 0x12345678abcd5000
+    assert output_state["rax"] == 0x12345678ABCD5000
+    assert output_state["rbx"] == 0x9876543210FE3000  # rbx unchanged
+
+
+def test_sub32_eax_ebx():
+    SUB32_INSTRUCTION = "29d8"  # sub eax, ebx (32-bit)
+    inp = bytes.fromhex(SUB32_INSTRUCTION)
+    irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
+
+    # input state: eax=0x80000000, ebx=0x30000000
+    input_state = {
+        "rax": 0xFEDCBA9880000000,  # eax = 0x80000000
+        "rbx": 0x12345678930000000,  # ebx = 0x30000000
+    }
+
+    output_state = interpret(irsb, input_state)
+
+    # expected: eax should be 0x80000000 - 0x30000000 = 0x50000000
+    # 32-bit operations zero upper 32 bits: 0x0000000050000000
+    assert output_state["rax"] == 0x0000000050000000
+    assert output_state["rbx"] == 0x12345678930000000  # rbx unchanged

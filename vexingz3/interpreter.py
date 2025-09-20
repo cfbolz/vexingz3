@@ -90,6 +90,15 @@ class State:
     def _binop_Iop_Sub64(self, expr, left, right):
         return self._mask(left - right, 64)
 
+    def _binop_Iop_Sub8(self, expr, left, right):
+        return self._mask(left - right, 8)
+
+    def _binop_Iop_Sub16(self, expr, left, right):
+        return self._mask(left - right, 16)
+
+    def _binop_Iop_Sub32(self, expr, left, right):
+        return self._mask(left - right, 32)
+
     def _binop_Iop_Add8(self, expr, left, right):
         return self._mask(left + right, 8)
 
