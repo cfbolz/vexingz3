@@ -10,9 +10,10 @@ TYPE_TO_BITWIDTH = {
 
 
 class State:
-    def __init__(self, registers=None):
+    def __init__(self, registers=None, memory=None):
         self.registers = registers or {}
         self.temps = {}
+        self.memory = memory or {}
 
     def get_register(self, reg_name):
         return self.registers.get(reg_name, 0)
@@ -25,6 +26,22 @@ class State:
 
     def set_temp(self, temp_name, value):
         self.temps[temp_name] = value
+
+    def read_memory(self, address, size_bytes):
+        """Read little-endian value from memory at given address."""
+        value = 0
+        for i in range(size_bytes):
+            byte_addr = address + i
+            byte_value = self.memory.get(byte_addr, 0)
+            value |= byte_value << (i * 8)
+        return value
+
+    def write_memory(self, address, value, size_bytes):
+        """Write little-endian value to memory at given address."""
+        for i in range(size_bytes):
+            byte_addr = address + i
+            byte_value = (value >> (i * 8)) & 0xFF
+            self.memory[byte_addr] = byte_value
 
     def interpret(self, irsb):
         for stmt in irsb.statements:
@@ -49,6 +66,15 @@ class State:
                 mask = (1 << bitwidth) - 1
                 new_value = (current_value & ~mask) | (value & mask)
                 self.set_register(reg_name, new_value)
+            elif isinstance(stmt, pyvex.stmt.Store):
+                # STle(address) = value - store to memory
+                address = self._eval_expression(stmt.addr, irsb.arch)
+                value = self._eval_expression(stmt.data, irsb.arch)
+                # Get bit width and convert to bytes
+                data_type = stmt.data.result_type(irsb.tyenv)
+                bitwidth = TYPE_TO_BITWIDTH[data_type]
+                size_bytes = bitwidth // 8
+                self.write_memory(address, value, size_bytes)
 
     def _eval_expression(self, expr, arch):
         if isinstance(expr, pyvex.expr.Get):
@@ -85,6 +111,13 @@ class State:
                 return self._eval_expression(expr.iftrue, arch)
             else:
                 return self._eval_expression(expr.iffalse, arch)
+        elif isinstance(expr, pyvex.expr.Load):
+            # LDle:I64(address) - load from memory
+            address = self._eval_expression(expr.addr, arch)
+            # Get bit width and convert to bytes
+            bitwidth = TYPE_TO_BITWIDTH[expr.ty]
+            size_bytes = bitwidth // 8
+            return self.read_memory(address, size_bytes)
 
         return 0
 
@@ -104,6 +137,21 @@ class State:
         """Sign-extend value from one bit width to another."""
         signed_value = self._to_signed(value, from_bitwidth)
         return self._from_signed(signed_value, to_bitwidth)
+
+    def _c_style_divmod(self, dividend, divisor):
+        """C-style division that truncates towards zero (not Python floor division)."""
+        if divisor == 0:
+            raise ZeroDivisionError("Division by zero")
+
+        # For positive results, both methods are the same
+        if (dividend >= 0 and divisor > 0) or (dividend <= 0 and divisor < 0):
+            return dividend // divisor, dividend % divisor
+
+        # For negative results, we need to truncate towards zero
+        # Python's // floors towards negative infinity, so we adjust
+        quotient = -(abs(dividend) // abs(divisor))
+        remainder = dividend - (quotient * divisor)
+        return quotient, remainder
 
     def _binop_Iop_Add64(self, expr, left, right):
         return self._mask(left + right, 64)
@@ -253,9 +301,124 @@ class State:
         result = left_signed >> right
         return self._from_signed(result, 64)
 
+    def _binop_Iop_Shl8(self, expr, left, right):
+        return self._mask(left << right, 8)
+
+    def _binop_Iop_Shl16(self, expr, left, right):
+        return self._mask(left << right, 16)
+
+    def _binop_Iop_Shl32(self, expr, left, right):
+        return self._mask(left << right, 32)
+
+    def _binop_Iop_Shr8(self, expr, left, right):
+        return self._mask(left >> right, 8)
+
+    def _binop_Iop_Shr16(self, expr, left, right):
+        return self._mask(left >> right, 16)
+
+    def _binop_Iop_Shr32(self, expr, left, right):
+        return self._mask(left >> right, 32)
+
+    def _binop_Iop_Sar8(self, expr, left, right):
+        left_signed = self._to_signed(left, 8)
+        result = left_signed >> right
+        return self._from_signed(result, 8)
+
+    def _binop_Iop_Sar16(self, expr, left, right):
+        left_signed = self._to_signed(left, 16)
+        result = left_signed >> right
+        return self._from_signed(result, 16)
+
+    def _binop_Iop_Sar32(self, expr, left, right):
+        left_signed = self._to_signed(left, 32)
+        result = left_signed >> right
+        return self._from_signed(result, 32)
+
     def _binop_Iop_CmpNE8(self, expr, left, right):
         # Compare not equal: returns 1 if different, 0 if same
         return 1 if left != right else 0
+
+    def _binop_Iop_CmpEQ32(self, expr, left, right):
+        # Compare equal: returns 1 if same, 0 if different
+        return 1 if left == right else 0
+
+    def _binop_Iop_CmpEQ64(self, expr, left, right):
+        # Compare equal: returns 1 if same, 0 if different
+        return 1 if left == right else 0
+
+    def _binop_Iop_64HLto128(self, expr, left, right):
+        # Combine high:low 64-bit values into 128-bit value
+        high = self._mask(left, 64)
+        low = self._mask(right, 64)
+        return (high << 64) | low
+
+    def _binop_Iop_32HLto64(self, expr, left, right):
+        # Combine high:low 32-bit values into 64-bit value
+        high = self._mask(left, 32)
+        low = self._mask(right, 32)
+        return (high << 32) | low
+
+    def _binop_Iop_16HLto32(self, expr, left, right):
+        # Combine high:low 16-bit values into 32-bit value
+        high = self._mask(left, 16)
+        low = self._mask(right, 16)
+        return (high << 16) | low
+
+    def _binop_Iop_DivModU128to64(self, expr, left, right):
+        # Unsigned division: 128-bit dividend / 64-bit divisor
+        # Returns 128-bit result: quotient in low 64 bits, remainder in high 64 bits
+        dividend = left
+        divisor = self._mask(right, 64)
+        if divisor == 0:
+            raise ZeroDivisionError("Division by zero")
+        quotient = dividend // divisor
+        remainder = dividend % divisor
+        # Pack quotient (low) and remainder (high) into 128-bit result
+        return self._mask(remainder, 64) << 64 | self._mask(quotient, 64)
+
+    def _binop_Iop_DivModU64to32(self, expr, left, right):
+        # Unsigned division: 64-bit dividend / 32-bit divisor
+        # Returns 64-bit result: quotient in low 32 bits, remainder in high 32 bits
+        dividend = self._mask(left, 64)
+        divisor = self._mask(right, 32)
+        if divisor == 0:
+            raise ZeroDivisionError("Division by zero")
+        quotient = dividend // divisor
+        remainder = dividend % divisor
+        # Pack quotient (low) and remainder (high) into 64-bit result
+        return self._mask(remainder, 32) << 32 | self._mask(quotient, 32)
+
+    def _binop_Iop_DivModS128to64(self, expr, left, right):
+        # Signed division: 128-bit dividend / 64-bit divisor
+        # Returns 128-bit result: quotient in low 64 bits, remainder in high 64 bits
+        dividend_signed = self._to_signed(left, 128)
+        divisor_signed = self._to_signed(right, 64)
+        quotient, remainder = self._c_style_divmod(dividend_signed, divisor_signed)
+        # Convert back to unsigned and pack
+        quotient_unsigned = self._from_signed(quotient, 64)
+        remainder_unsigned = self._from_signed(remainder, 64)
+        return self._mask(remainder_unsigned, 64) << 64 | self._mask(
+            quotient_unsigned, 64
+        )
+
+    def _binop_Iop_DivModS64to32(self, expr, left, right):
+        # Signed division: 64-bit dividend / 32-bit divisor
+        # Returns 64-bit result: quotient in low 32 bits, remainder in high 32 bits
+        dividend_signed = self._to_signed(left, 64)
+        divisor_signed = self._to_signed(right, 32)
+        quotient, remainder = self._c_style_divmod(dividend_signed, divisor_signed)
+        # Convert back to unsigned and pack
+        quotient_unsigned = self._from_signed(quotient, 32)
+        remainder_unsigned = self._from_signed(remainder, 32)
+        return self._mask(remainder_unsigned, 32) << 32 | self._mask(
+            quotient_unsigned, 32
+        )
+
+    def _binop_Iop_CmpLT64S(self, expr, left, right):
+        # Signed 64-bit less-than comparison: returns 1 if left < right, 0 otherwise
+        left_signed = self._to_signed(left, 64)
+        right_signed = self._to_signed(right, 64)
+        return 1 if left_signed < right_signed else 0
 
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
@@ -302,11 +465,44 @@ class State:
     def _unop_Iop_32Sto64(self, expr, arg):
         return self._sign_extend(arg, 32, 64)  # Sign-extend 32 to 64
 
+    def _unop_Iop_16Uto32(self, expr, arg):
+        return self._mask(arg, 16)  # Zero-extend 16 to 32
+
+    def _unop_Iop_8Uto16(self, expr, arg):
+        return self._mask(arg, 8)  # Zero-extend 8 to 16
+
+    def _unop_Iop_16Sto32(self, expr, arg):
+        return self._sign_extend(arg, 16, 32)  # Sign-extend 16 to 32
+
+    def _unop_Iop_8Sto16(self, expr, arg):
+        return self._sign_extend(arg, 8, 16)  # Sign-extend 8 to 16
+
+    def _unop_Iop_16to8(self, expr, arg):
+        return self._mask(arg, 8)  # Extract low 8 bits from 16
+
+    def _unop_Iop_Not8(self, expr, arg):
+        return self._mask(~arg, 8)  # Bitwise NOT with 8-bit mask
+
+    def _unop_Iop_Not16(self, expr, arg):
+        return self._mask(~arg, 16)  # Bitwise NOT with 16-bit mask
+
+    def _unop_Iop_Not32(self, expr, arg):
+        return self._mask(~arg, 32)  # Bitwise NOT with 32-bit mask
+
+    def _unop_Iop_Not64(self, expr, arg):
+        return self._mask(~arg, 64)  # Bitwise NOT with 64-bit mask
+
+    def _unop_Iop_1Uto64(self, expr, arg):
+        return self._mask(arg, 1)  # Zero-extend 1-bit to 64-bit (already done by mask)
+
+    def _unop_Iop_64to1(self, expr, arg):
+        return self._mask(arg, 1)  # Extract low 1 bit
+
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")
 
 
-def interpret(irsb, input_state):
-    state = State(input_state.copy())
+def interpret(irsb, input_state, memory=None):
+    state = State(input_state.copy(), memory or {})
     state.interpret(irsb)
-    return state.registers
+    return state.registers, state.memory

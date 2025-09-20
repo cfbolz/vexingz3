@@ -14,7 +14,7 @@
 
 - [x] **ROL/ROR (rotates)** - Implement rotate operations (`rol rax, 4`, `ror eax, cl`) for left and right rotations
 
-- [ ] **DIV/IDIV (division)** - Implement division operations with proper remainder handling (`div rbx`, `idiv rbx`) for unsigned and signed division
+- [x] **DIV/IDIV (division)** - Implement division operations with proper remainder handling (`div rbx`, `idiv rbx`) for unsigned and signed division
 
 ## Implementation Notes
 

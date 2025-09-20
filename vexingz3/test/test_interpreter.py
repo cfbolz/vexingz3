@@ -4,11 +4,29 @@ import pyvex
 from vexingz3.interpreter import interpret
 
 
+class Result:
+    def __init__(self, registers, memory):
+        self.registers = registers
+        self.memory = memory
+        # Allow direct access to registers for backward compatibility
+        for reg, value in registers.items():
+            setattr(self, reg, value)
+
+    def __getitem__(self, key):
+        return self.registers[key]
+
+
 def run(instruction, **initial_state):
-    """Helper to run instruction with given register state."""
+    """Helper to run instruction with given register state and memory."""
     inp = bytes.fromhex(instruction)
     irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
-    return interpret(irsb, initial_state)
+
+    # Separate memory from register state
+    memory = initial_state.pop("memory", {})
+
+    registers, final_memory = interpret(irsb, initial_state, memory)
+
+    return Result(registers, final_memory)
 
 
 def check_output(output_state, **expected):
@@ -425,3 +443,342 @@ def test_ror64_variable():
     output_state = run("48d3c8", rax=0x1234567890ABCDEF, rcx=0x04)
     # Same as ror rax, 4
     check_output(output_state, rax=0xF1234567890ABCDE, rcx=0x04)
+
+
+def test_div64_basic():
+    # div rbx (unsigned 64-bit division)
+    # rax = 100, rdx = 0, rbx = 10 -> rax = 10, rdx = 0
+    output_state = run("48f7f3", rax=100, rdx=0, rbx=10)
+    check_output(output_state, rax=10, rdx=0, rbx=10)
+
+
+def test_div64_with_remainder():
+    # div rbx (unsigned 64-bit division)
+    # rax = 107, rdx = 0, rbx = 10 -> rax = 10, rdx = 7
+    output_state = run("48f7f3", rax=107, rdx=0, rbx=10)
+    check_output(output_state, rax=10, rdx=7, rbx=10)
+
+
+def test_div32_basic():
+    # div ebx (unsigned 32-bit division)
+    # eax = 100, edx = 0, ebx = 10 -> eax = 10, edx = 0
+    output_state = run("f7f3", rax=100, rdx=0, rbx=10)
+    check_output(output_state, rax=10, rdx=0, rbx=10)
+
+
+def test_idiv64_positive():
+    # idiv rbx (signed 64-bit division)
+    # rax = 100, rdx = 0, rbx = 10 -> rax = 10, rdx = 0
+    output_state = run("48f7fb", rax=100, rdx=0, rbx=10)
+    check_output(output_state, rax=10, rdx=0, rbx=10)
+
+
+def test_idiv64_negative_dividend():
+    # idiv rbx (signed 64-bit division)
+    # rax = -100, rdx = -1, rbx = 10 -> rax = -10, rdx = 0
+    output_state = run("48f7fb", rax=0xFFFFFFFFFFFFFF9C, rdx=0xFFFFFFFFFFFFFFFF, rbx=10)
+    check_output(output_state, rax=0xFFFFFFFFFFFFFFF6, rdx=0, rbx=10)
+
+
+def test_idiv64_negative_divisor():
+    # idiv rbx (signed 64-bit division)
+    # rax = 100, rdx = 0, rbx = -10 -> rax = -10, rdx = 0
+    output_state = run("48f7fb", rax=100, rdx=0, rbx=0xFFFFFFFFFFFFFFF6)
+    check_output(output_state, rax=0xFFFFFFFFFFFFFFF6, rdx=0, rbx=0xFFFFFFFFFFFFFFF6)
+
+
+def test_idiv64_c_style_truncation():
+    # idiv rbx (signed 64-bit division)
+    # Test C-style truncation: -7 / 3 = -2 remainder -1 (C-style)
+    # Python would give: -7 // 3 = -3 remainder 2
+    # rax = -7, rdx = -1, rbx = 3 -> rax = -2, rdx = -1
+    output_state = run("48f7fb", rax=0xFFFFFFFFFFFFFFF9, rdx=0xFFFFFFFFFFFFFFFF, rbx=3)
+    check_output(output_state, rax=0xFFFFFFFFFFFFFFFE, rdx=0xFFFFFFFFFFFFFFFF, rbx=3)
+
+
+def test_memory_load_64bit():
+    # mov rax, [rbx] - load 64-bit value from memory
+    # Set up memory at address 0x1000 with value 0x123456789ABCDEF0
+    memory = {}
+    for i, byte_val in enumerate([0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]):
+        memory[0x1000 + i] = byte_val
+
+    output_state = run("488b03", rbx=0x1000, memory=memory)
+    check_output(output_state, rax=0x123456789ABCDEF0, rbx=0x1000)
+
+
+def test_memory_load_32bit():
+    # mov eax, [rbx] - load 32-bit value from memory
+    # Set up memory at address 0x1000 with value 0x12345678
+    memory = {}
+    for i, byte_val in enumerate([0x78, 0x56, 0x34, 0x12]):
+        memory[0x1000 + i] = byte_val
+
+    output_state = run("8b03", rbx=0x1000, memory=memory)
+    check_output(output_state, rax=0x12345678, rbx=0x1000)
+
+
+def test_memory_load_16bit():
+    # mov ax, [rbx] - load 16-bit value from memory
+    # Set up memory at address 0x1000 with value 0x1234
+    memory = {}
+    for i, byte_val in enumerate([0x34, 0x12]):
+        memory[0x1000 + i] = byte_val
+
+    output_state = run("668b03", rax=0xFFFFFFFFFFFFFFFF, rbx=0x1000, memory=memory)
+    check_output(output_state, rax=0xFFFFFFFFFFFF1234, rbx=0x1000)
+
+
+def test_memory_load_8bit():
+    # mov al, [rbx] - load 8-bit value from memory
+    # Set up memory at address 0x1000 with value 0x42
+    memory = {0x1000: 0x42}
+
+    output_state = run("8a03", rax=0xFFFFFFFFFFFFFFFF, rbx=0x1000, memory=memory)
+    check_output(output_state, rax=0xFFFFFFFFFFFFFF42, rbx=0x1000)
+
+
+def test_memory_store_64bit():
+    # mov [rbx], rax - store 64-bit value to memory
+    output_state = run("488903", rax=0x123456789ABCDEF0, rbx=0x1000)
+    check_output(output_state, rax=0x123456789ABCDEF0, rbx=0x1000)
+
+    # Check memory was written correctly (little-endian)
+    expected_bytes = [0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]
+    for i, expected_byte in enumerate(expected_bytes):
+        assert output_state.memory[0x1000 + i] == expected_byte
+
+
+def test_memory_store_32bit():
+    # mov [rbx], eax - store 32-bit value to memory
+    output_state = run("8903", rax=0x12345678, rbx=0x1000)
+    check_output(output_state, rax=0x12345678, rbx=0x1000)
+
+    # Check memory was written correctly (little-endian)
+    expected_bytes = [0x78, 0x56, 0x34, 0x12]
+    for i, expected_byte in enumerate(expected_bytes):
+        assert output_state.memory[0x1000 + i] == expected_byte
+
+
+def test_memory_store_16bit():
+    # mov [rbx], ax - store 16-bit value to memory
+    output_state = run("668903", rax=0x1234, rbx=0x1000)
+    check_output(output_state, rax=0x1234, rbx=0x1000)
+
+    # Check memory was written correctly (little-endian)
+    expected_bytes = [0x34, 0x12]
+    for i, expected_byte in enumerate(expected_bytes):
+        assert output_state.memory[0x1000 + i] == expected_byte
+
+
+def test_memory_store_8bit():
+    # mov [rbx], al - store 8-bit value to memory
+    output_state = run("8803", rax=0x42, rbx=0x1000)
+    check_output(output_state, rax=0x42, rbx=0x1000)
+
+    # Check memory was written correctly
+    assert output_state.memory[0x1000] == 0x42
+
+
+def test_memory_load_store_roundtrip():
+    # Test that we can store a value and load it back
+    # First store: mov [rbx], rax
+    store_result = run("488903", rax=0x123456789ABCDEF0, rbx=0x2000)
+
+    # Then load: mov rcx, [rbx]
+    load_result = run("488b0b", rbx=0x2000, memory=store_result.memory)
+    check_output(load_result, rcx=0x123456789ABCDEF0, rbx=0x2000)
+
+
+def test_push_rax():
+    # push rax - pushes 64-bit value onto stack
+    output_state = run("50", rax=0x123456789ABCDEF0, rsp=0x1000)
+
+    # RSP should be decremented by 8 bytes
+    check_output(output_state, rax=0x123456789ABCDEF0, rsp=0x0FF8)
+
+    # Check memory at new RSP contains the pushed value (little-endian)
+    expected_bytes = [0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]
+    for i, expected_byte in enumerate(expected_bytes):
+        assert output_state.memory[0x0FF8 + i] == expected_byte
+
+
+def test_pop_rax():
+    # pop rax - pops 64-bit value from stack
+    # Set up stack with value 0x123456789ABCDEF0
+    memory = {}
+    value_bytes = [0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]
+    for i, byte_val in enumerate(value_bytes):
+        memory[0x0FF8 + i] = byte_val
+
+    output_state = run("58", rsp=0x0FF8, memory=memory)
+
+    # RSP should be incremented by 8 bytes, RAX should contain popped value
+    check_output(output_state, rax=0x123456789ABCDEF0, rsp=0x1000)
+
+
+def test_push_ax():
+    # push ax - pushes 16-bit value onto stack
+    output_state = run("6650", rax=0x1234, rsp=0x1000)
+
+    # RSP should be decremented by 2 bytes
+    check_output(output_state, rax=0x1234, rsp=0x0FFE)
+
+    # Check memory at new RSP contains the pushed value (little-endian)
+    expected_bytes = [0x34, 0x12]
+    for i, expected_byte in enumerate(expected_bytes):
+        assert output_state.memory[0x0FFE + i] == expected_byte
+
+
+def test_pop_ax():
+    # pop ax - pops 16-bit value from stack
+    # Set up stack with value 0x1234
+    memory = {0x0FFE: 0x34, 0x0FFF: 0x12}
+
+    output_state = run("6658", rax=0xFFFFFFFFFFFFFFFF, rsp=0x0FFE, memory=memory)
+
+    # RSP should be incremented by 2 bytes, AX should contain popped value
+    check_output(output_state, rax=0xFFFFFFFFFFFF1234, rsp=0x1000)
+
+
+def test_push_pop_roundtrip():
+    # Test that we can push a value and pop it back
+    # First push: push rax
+    push_result = run("50", rax=0xDEADBEEFCAFEBABE, rsp=0x2000)
+
+    # Then pop into a different register: pop rbx
+    pop_result = run("5b", rsp=push_result.rsp, memory=push_result.memory)
+
+    # Should get original value back and RSP should return to original value
+    check_output(pop_result, rbx=0xDEADBEEFCAFEBABE, rsp=0x2000)
+
+
+def test_stack_multiple_operations():
+    # Test LIFO behavior with multiple pushes and pops
+    initial_rsp = 0x3000
+
+    # Push three values: 0x1111, 0x2222, 0x3333
+    # push rax (0x1111)
+    result1 = run("50", rax=0x1111, rsp=initial_rsp)
+    assert result1.rsp == initial_rsp - 8
+
+    # push rbx (0x2222)
+    result2 = run("53", rbx=0x2222, rsp=result1.rsp, memory=result1.memory)
+    assert result2.rsp == initial_rsp - 16
+
+    # push rcx (0x3333)
+    result3 = run("51", rcx=0x3333, rsp=result2.rsp, memory=result2.memory)
+    assert result3.rsp == initial_rsp - 24
+
+    # Now pop them back in reverse order (LIFO)
+    # pop rdx (should get 0x3333)
+    result4 = run("5a", rsp=result3.rsp, memory=result3.memory)
+    check_output(result4, rdx=0x3333, rsp=initial_rsp - 16)
+
+    # pop rsi (should get 0x2222)
+    result5 = run("5e", rsp=result4.rsp, memory=result4.memory)
+    check_output(result5, rsi=0x2222, rsp=initial_rsp - 8)
+
+    # pop rdi (should get 0x1111)
+    result6 = run("5f", rsp=result5.rsp, memory=result5.memory)
+    check_output(result6, rdi=0x1111, rsp=initial_rsp)
+
+
+def test_neg_rax():
+    # neg rax - two's complement negation of 64-bit value
+    output_state = run("48f7d8", rax=0x123456789ABCDEF0)
+    # -0x123456789ABCDEF0 = 0xEDCBA9876543210F + 1 = 0xEDCBA98765432110
+    check_output(output_state, rax=0xEDCBA98765432110)
+
+
+def test_neg_eax():
+    # neg eax - two's complement negation of 32-bit value
+    output_state = run("f7d8", rax=0x12345678)
+    # -0x12345678 = 0xEDCBA987 + 1 = 0xEDCBA988 (32-bit)
+    check_output(output_state, rax=0xEDCBA988)
+
+
+def test_neg_zero():
+    # neg rax with zero - should remain zero
+    output_state = run("48f7d8", rax=0x0)
+    check_output(output_state, rax=0x0)
+
+
+def test_not_rax():
+    # not rax - bitwise complement of 64-bit value
+    output_state = run("48f7d0", rax=0x123456789ABCDEF0)
+    # ~0x123456789ABCDEF0 = 0xEDCBA9876543210F
+    check_output(output_state, rax=0xEDCBA9876543210F)
+
+
+def test_not_eax():
+    # not eax - bitwise complement of 32-bit value
+    output_state = run("f7d0", rax=0x12345678)
+    # ~0x12345678 = 0xEDCBA987 (32-bit), zero-extended to 64-bit
+    check_output(output_state, rax=0xEDCBA987)
+
+
+def test_not_all_ones():
+    # not rax with all ones - should become zero
+    output_state = run("48f7d0", rax=0xFFFFFFFFFFFFFFFF)
+    check_output(output_state, rax=0x0)
+
+
+def test_inc_rax():
+    # inc rax - increment 64-bit value
+    output_state = run("48ffc0", rax=0x123456789ABCDEF0)
+    check_output(output_state, rax=0x123456789ABCDEF1)
+
+
+def test_inc_eax():
+    # inc eax - increment 32-bit value
+    output_state = run("ffc0", rax=0x12345678)
+    check_output(output_state, rax=0x12345679)
+
+
+def test_inc_overflow():
+    # inc rax with max value - should overflow to zero
+    output_state = run("48ffc0", rax=0xFFFFFFFFFFFFFFFF)
+    check_output(output_state, rax=0x0)
+
+
+def test_dec_rax():
+    # dec rax - decrement 64-bit value
+    output_state = run("48ffc8", rax=0x123456789ABCDEF1)
+    check_output(output_state, rax=0x123456789ABCDEF0)
+
+
+def test_dec_eax():
+    # dec eax - decrement 32-bit value
+    output_state = run("ffc8", rax=0x12345679)
+    check_output(output_state, rax=0x12345678)
+
+
+def test_dec_underflow():
+    # dec rax with zero - should underflow to max value
+    output_state = run("48ffc8", rax=0x0)
+    check_output(output_state, rax=0xFFFFFFFFFFFFFFFF)
+
+
+def test_cmp_cmovg_greater():
+    # Test CMP + CMOVG when first operand is greater
+    # cmp rax, rbx + cmovg rcx, rdx
+    # When rax > rbx, should move rdx to rcx
+    output_state = run("4839d8480f4fca", rax=10, rbx=5, rcx=0x1111, rdx=0x2222)
+    check_output(output_state, rax=10, rbx=5, rcx=0x2222, rdx=0x2222)
+
+
+def test_cmp_cmovg_not_greater():
+    # Test CMP + CMOVG when first operand is not greater
+    # cmp rax, rbx + cmovg rcx, rdx
+    # When rax <= rbx, should keep rcx unchanged
+    output_state = run("4839d8480f4fca", rax=5, rbx=10, rcx=0x1111, rdx=0x2222)
+    check_output(output_state, rax=5, rbx=10, rcx=0x1111, rdx=0x2222)
+
+
+def test_cmp_cmovg_equal():
+    # Test CMP + CMOVG when operands are equal
+    # cmp rax, rbx + cmovg rcx, rdx
+    # When rax == rbx, should keep rcx unchanged (not greater)
+    output_state = run("4839d8480f4fca", rax=5, rbx=5, rcx=0x1111, rdx=0x2222)
+    check_output(output_state, rax=5, rbx=5, rcx=0x1111, rdx=0x2222)
