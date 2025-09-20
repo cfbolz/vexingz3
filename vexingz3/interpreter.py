@@ -1,3 +1,5 @@
+import struct
+
 import pyvex
 
 # Mapping from VEX type to bit width
@@ -456,6 +458,104 @@ class State:
             result |= part << (i * 32)
 
         return self._mask(result, 128)
+
+    # Floating point helper methods
+    def _int_to_double(self, int_val):
+        """Convert 64-bit integer to double precision float."""
+        bytes_val = int_val.to_bytes(8, "little")
+        return struct.unpack("<d", bytes_val)[0]
+
+    def _double_to_int(self, float_val):
+        """Convert double precision float to 64-bit integer."""
+        bytes_val = struct.pack("<d", float_val)
+        return int.from_bytes(bytes_val, "little")
+
+    def _int_to_single(self, int_val):
+        """Convert 32-bit integer to single precision float."""
+        bytes_val = int_val.to_bytes(4, "little")
+        return struct.unpack("<f", bytes_val)[0]
+
+    def _single_to_int(self, float_val):
+        """Convert single precision float to 32-bit integer."""
+        bytes_val = struct.pack("<f", float_val)
+        return int.from_bytes(bytes_val, "little")
+
+    def _float_binop_64f0x2(self, left, right, operation):
+        """
+        Helper for 64-bit floating point operations on lane 0 of 2 lanes.
+        Extracts lower 64 bits, performs operation, preserves upper 64 bits.
+        """
+        left_low = self._mask(left, 64)
+        right_low = self._mask(right, 64)
+
+        # Convert to double precision floats
+        left_float = self._int_to_double(left_low)
+        right_float = self._int_to_double(right_low)
+
+        # Perform operation
+        result_float = operation(left_float, right_float)
+
+        # Convert back to integer
+        result_low = self._double_to_int(result_float)
+
+        # Preserve upper 64 bits from left operand, replace lower 64 bits
+        left_high = (left >> 64) & ((1 << 64) - 1)
+        return (left_high << 64) | result_low
+
+    def _float_binop_32f0x4(self, left, right, operation):
+        """
+        Helper for 32-bit floating point operations on lane 0 of 4 lanes.
+        Extracts lower 32 bits, performs operation, preserves upper 96 bits.
+        """
+        left_low = self._mask(left, 32)
+        right_low = self._mask(right, 32)
+
+        # Convert to single precision floats
+        left_float = self._int_to_single(left_low)
+        right_float = self._int_to_single(right_low)
+
+        # Perform operation
+        result_float = operation(left_float, right_float)
+
+        # Convert back to integer
+        result_low = self._single_to_int(result_float)
+
+        # Preserve upper 96 bits from left operand, replace lower 32 bits
+        left_upper = (left >> 32) & ((1 << 96) - 1)
+        return (left_upper << 32) | result_low
+
+    # Floating point operations
+    def _binop_Iop_Add64F0x2(self, expr, left, right):
+        # Double precision floating point add on lane 0 of 2 lanes
+        return self._float_binop_64f0x2(left, right, lambda x, y: x + y)
+
+    def _binop_Iop_Sub64F0x2(self, expr, left, right):
+        # Double precision floating point subtract on lane 0 of 2 lanes
+        return self._float_binop_64f0x2(left, right, lambda x, y: x - y)
+
+    def _binop_Iop_Mul64F0x2(self, expr, left, right):
+        # Double precision floating point multiply on lane 0 of 2 lanes
+        return self._float_binop_64f0x2(left, right, lambda x, y: x * y)
+
+    def _binop_Iop_Div64F0x2(self, expr, left, right):
+        # Double precision floating point divide on lane 0 of 2 lanes
+        return self._float_binop_64f0x2(left, right, lambda x, y: x / y)
+
+    def _binop_Iop_Add32F0x4(self, expr, left, right):
+        # Single precision floating point add on lane 0 of 4 lanes
+        return self._float_binop_32f0x4(left, right, lambda x, y: x + y)
+
+    def _binop_Iop_Sub32F0x4(self, expr, left, right):
+        # Single precision floating point subtract on lane 0 of 4 lanes
+        return self._float_binop_32f0x4(left, right, lambda x, y: x - y)
+
+    def _binop_Iop_Mul32F0x4(self, expr, left, right):
+        # Single precision floating point multiply on lane 0 of 4 lanes
+        return self._float_binop_32f0x4(left, right, lambda x, y: x * y)
+
+    def _binop_Iop_Div32F0x4(self, expr, left, right):
+        # Single precision floating point divide on lane 0 of 4 lanes
+        return self._float_binop_32f0x4(left, right, lambda x, y: x / y)
 
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")

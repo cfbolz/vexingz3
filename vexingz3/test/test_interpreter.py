@@ -1,3 +1,5 @@
+import struct
+
 import archinfo
 import pyvex
 
@@ -14,6 +16,24 @@ class Result:
 
     def __getitem__(self, key):
         return self.registers[key]
+
+
+def float_to_int(float_val, precision="single"):
+    """Convert float to integer representation."""
+    if precision == "single":
+        return int.from_bytes(struct.pack("<f", float_val), "little")
+    else:  # double precision
+        return int.from_bytes(struct.pack("<d", float_val), "little")
+
+
+def int_to_float(int_val, precision="single"):
+    """Convert integer to float representation."""
+    if precision == "single":
+        bytes_val = int_val.to_bytes(4, "little")
+        return struct.unpack("<f", bytes_val)[0]
+    else:  # double precision
+        bytes_val = int_val.to_bytes(8, "little")
+        return struct.unpack("<d", bytes_val)[0]
 
 
 def run(instruction, **initial_state):
@@ -826,3 +846,107 @@ def test_addps_xmm0_xmm1():
     )  # [64,48,32,16] in little-endian
     # Result should be [68,51,34,17] = 0x44000000330000002200000011000000
     check_output(output_state, ymm0=0x44000000330000002200000011000000)
+
+
+def test_addsd_double_precision():
+    # addsd xmm0, xmm1 - double precision scalar add (3.14 + 2.71 = 5.85)
+    val1 = 3.14
+    val2 = 2.71
+    val1_int = float_to_int(val1, "double")
+    val2_int = float_to_int(val2, "double")
+    expected = val1 + val2
+    expected_int = float_to_int(expected, "double")
+
+    output_state = run("f20f58c1", ymm0=val1_int, ymm1=val2_int)
+    check_output(output_state, ymm0=expected_int)
+
+
+def test_subsd_double_precision():
+    # subsd xmm0, xmm1 - double precision scalar subtract (5.5 - 2.25 = 3.25)
+    val1 = 5.5
+    val2 = 2.25
+    val1_int = float_to_int(val1, "double")
+    val2_int = float_to_int(val2, "double")
+    expected = val1 - val2
+    expected_int = float_to_int(expected, "double")
+
+    output_state = run("f20f5cc1", ymm0=val1_int, ymm1=val2_int)
+    check_output(output_state, ymm0=expected_int)
+
+
+def test_mulsd_double_precision():
+    # mulsd xmm0, xmm1 - double precision scalar multiply (4.0 * 1.5 = 6.0)
+    val1 = 4.0
+    val2 = 1.5
+    val1_int = float_to_int(val1, "double")
+    val2_int = float_to_int(val2, "double")
+    expected = val1 * val2
+    expected_int = float_to_int(expected, "double")
+
+    output_state = run("f20f59c1", ymm0=val1_int, ymm1=val2_int)
+    check_output(output_state, ymm0=expected_int)
+
+
+def test_divsd_double_precision():
+    # divsd xmm0, xmm1 - double precision scalar divide (8.0 / 2.0 = 4.0)
+    val1 = 8.0
+    val2 = 2.0
+    val1_int = float_to_int(val1, "double")
+    val2_int = float_to_int(val2, "double")
+    expected = val1 / val2
+    expected_int = float_to_int(expected, "double")
+
+    output_state = run("f20f5ec1", ymm0=val1_int, ymm1=val2_int)
+    check_output(output_state, ymm0=expected_int)
+
+
+def test_addss_single_precision():
+    # addss xmm0, xmm1 - single precision scalar add (2.5 + 1.5 = 4.0)
+    val1 = 2.5
+    val2 = 1.5
+    val1_int = float_to_int(val1, "single")
+    val2_int = float_to_int(val2, "single")
+    expected = val1 + val2
+    expected_int = float_to_int(expected, "single")
+
+    output_state = run("f30f58c1", ymm0=val1_int, ymm1=val2_int)
+    check_output(output_state, ymm0=expected_int)
+
+
+def test_subss_single_precision():
+    # subss xmm0, xmm1 - single precision scalar subtract (7.0 - 3.0 = 4.0)
+    val1 = 7.0
+    val2 = 3.0
+    val1_int = float_to_int(val1, "single")
+    val2_int = float_to_int(val2, "single")
+    expected = val1 - val2
+    expected_int = float_to_int(expected, "single")
+
+    output_state = run("f30f5cc1", ymm0=val1_int, ymm1=val2_int)
+    check_output(output_state, ymm0=expected_int)
+
+
+def test_mulss_single_precision():
+    # mulss xmm0, xmm1 - single precision scalar multiply (3.0 * 2.0 = 6.0)
+    val1 = 3.0
+    val2 = 2.0
+    val1_int = float_to_int(val1, "single")
+    val2_int = float_to_int(val2, "single")
+    expected = val1 * val2
+    expected_int = float_to_int(expected, "single")
+
+    output_state = run("f30f59c1", ymm0=val1_int, ymm1=val2_int)
+    check_output(output_state, ymm0=expected_int)
+
+
+def test_divss_single_precision():
+    # divss xmm0, xmm1 - single precision scalar divide (12.0 / 4.0 = 3.0)
+    val1 = 12.0
+    val2 = 4.0
+    val1_int = float_to_int(val1, "single")
+    val2_int = float_to_int(val2, "single")
+    expected = val1 / val2
+    expected_int = float_to_int(expected, "single")
+
+    output_state = run("f30f5ec1", ymm0=val1_int, ymm1=val2_int)
+    check_output(output_state, ymm0=expected_int)
