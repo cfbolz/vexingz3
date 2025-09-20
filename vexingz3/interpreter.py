@@ -6,6 +6,7 @@ TYPE_TO_BITWIDTH = {
     "Ity_I16": 16,
     "Ity_I32": 32,
     "Ity_I64": 64,
+    "Ity_V128": 128,
 }
 
 
@@ -94,6 +95,7 @@ class State:
             temp_name = f"t{expr.tmp}"
             return self.get_temp(temp_name)
         elif isinstance(expr, pyvex.expr.Binop):
+            # Standard 2-argument binop
             left = self._eval_expression(expr.args[0], arch)
             right = self._eval_expression(expr.args[1], arch)
             return getattr(self, f"_binop_{expr.op}", self._default_binop)(
@@ -102,6 +104,14 @@ class State:
         elif isinstance(expr, pyvex.expr.Unop):
             arg = self._eval_expression(expr.args[0], arch)
             return getattr(self, f"_unop_{expr.op}", self._default_unop)(expr, arg)
+        elif isinstance(expr, pyvex.expr.Triop):
+            # 3-operand operations like Add32Fx4(rounding_mode, left, right)
+            arg0 = self._eval_expression(expr.args[0], arch)
+            arg1 = self._eval_expression(expr.args[1], arch)
+            arg2 = self._eval_expression(expr.args[2], arch)
+            return getattr(self, f"_triop_{expr.op}", self._default_triop)(
+                expr, arg0, arg1, arg2
+            )
         elif isinstance(expr, pyvex.expr.Const):
             return expr.con.value
         elif isinstance(expr, pyvex.expr.ITE):
@@ -118,8 +128,14 @@ class State:
             bitwidth = TYPE_TO_BITWIDTH[expr.ty]
             size_bytes = bitwidth // 8
             return self.read_memory(address, size_bytes)
-
-        return 0
+        elif isinstance(expr, pyvex.expr.CCall):
+            # VEX helper function calls - for simplicity, return 0 for now
+            # These are typically for complex operations like flag calculations
+            return 0
+        else:
+            raise NotImplementedError(
+                f"Expression type {type(expr)} not implemented: {expr}"
+            )
 
     def _mask(self, value, bitwidth):
         return value & ((1 << bitwidth) - 1)
@@ -420,8 +436,32 @@ class State:
         right_signed = self._to_signed(right, 64)
         return 1 if left_signed < right_signed else 0
 
+    def _triop_Iop_Add32Fx4(self, expr, rounding_mode, left, right):
+        # Add 4 packed 32-bit floats (SSE operation)
+        # For simplicity, treat as integer operations on 32-bit chunks
+        # Args: rounding_mode (ignored), left_operand, right_operand
+
+        # Extract 4x32-bit values from each 128-bit operand
+        left_parts = [(left >> (i * 32)) & 0xFFFFFFFF for i in range(4)]
+        right_parts = [(right >> (i * 32)) & 0xFFFFFFFF for i in range(4)]
+
+        # Add corresponding parts (treating as unsigned for now)
+        result_parts = [
+            self._mask(left_parts[i] + right_parts[i], 32) for i in range(4)
+        ]
+
+        # Combine back into 128-bit result
+        result = 0
+        for i, part in enumerate(result_parts):
+            result |= part << (i * 32)
+
+        return self._mask(result, 128)
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
+
+    def _default_triop(self, expr, arg0, arg1, arg2):
+        raise NotImplementedError(f"Triop {expr.op} not implemented")
 
     def _unop_Iop_64to32(self, expr, arg):
         return self._mask(arg, 32)

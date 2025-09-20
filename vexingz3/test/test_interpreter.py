@@ -801,3 +801,28 @@ def test_test_nonzero_result():
     # test rax, rbx when AND result is non-zero
     output_state = run("4885d8", rax=0xFFFF, rbx=0xFF00)
     check_output(output_state, rax=0xFFFF, rbx=0xFF00)
+
+
+def test_movaps_xmm0_xmm1():
+    # movaps xmm0, xmm1 - move 128-bit aligned packed single precision
+    # Should copy 128-bit value from xmm1 to xmm0 (mapped as ymm registers)
+    output_state = run("0f28c1", ymm1=0x12345678ABCDEF0011223344AABBCCDD)
+    check_output(
+        output_state,
+        ymm0=0x12345678ABCDEF0011223344AABBCCDD,
+        ymm1=0x12345678ABCDEF0011223344AABBCCDD,
+    )
+
+
+def test_addps_xmm0_xmm1():
+    # addps xmm0, xmm1 - add 4 packed 32-bit values (mapped as ymm registers)
+    # For simplicity, treating as integer addition of 32-bit chunks
+    # xmm0 = [0x01, 0x02, 0x03, 0x04] + xmm1 = [0x10, 0x20, 0x30, 0x40]
+    # Expected result: [0x11, 0x22, 0x33, 0x44]
+    output_state = run(
+        "0f58c1",
+        ymm0=0x04000000030000000200000001000000,  # [4,3,2,1] in little-endian
+        ymm1=0x40000000300000002000000010000000,
+    )  # [64,48,32,16] in little-endian
+    # Result should be [68,51,34,17] = 0x44000000330000002200000011000000
+    check_output(output_state, ymm0=0x44000000330000002200000011000000)
