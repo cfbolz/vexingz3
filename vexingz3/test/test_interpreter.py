@@ -88,3 +88,21 @@ def test_or64_rax_rbx():
 def test_xor64_rax_rbx():
     output_state = run("4831d8", rax=0xFF00FF00FF00FF00, rbx=0xF0F0F0F0F0F0F0F0)
     check_output(output_state, rax=0x0FF00FF00FF00FF0, rbx=0xF0F0F0F0F0F0F0F0)
+
+
+def test_mov_immediate_rax():
+    # mov rax, 0x1234
+    output_state = run("48c7c034120000", rax=0xDEADBEEF)
+    check_output(output_state, rax=0x1234)
+
+
+def test_mov_immediate_rbx():
+    # mov rbx, 0x5678
+    output_state = run("48c7c378560000", rbx=0xCAFEBABE)
+    check_output(output_state, rbx=0x5678)
+
+
+def test_mov_immediate_zero():
+    # mov rax, 0x0
+    output_state = run("48c7c000000000", rax=0xFFFFFFFFFFFFFFFF)
+    check_output(output_state, rax=0x0)

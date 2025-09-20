@@ -4,9 +4,9 @@
 
 - [ ] **MUL (multiply)** - Implement multiplication operations (`Iop_Mul8/16/32/64`) with proper overflow handling
 
-- [ ] **MOV with immediate values** - Support instructions like `mov rax, 0x1234` for constant loading
+- [x] **MOV with immediate values** - Support instructions like `mov rax, 0x1234` for constant loading
 
-- [ ] **AND/OR/XOR** - Implement bitwise operations (`and rax, rbx`, `or rax, rbx`, `xor rax, rbx`)
+- [x] **AND/OR/XOR** - Implement bitwise operations (`and rax, rbx`, `or rax, rbx`, `xor rax, rbx`)
 
 - [ ] **CMP (compare)** - Add comparison instructions that set flags without storing results, requiring flag infrastructure implementation
 
