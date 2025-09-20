@@ -10,6 +10,12 @@
 
 - [ ] **CMP (compare)** - Add comparison instructions that set flags without storing results, requiring flag infrastructure implementation
 
+- [x] **SHL/SHR/SAR (shifts)** - Implement shift operations (`shl rax, 4`, `shr rax, cl`, `sar rax, 1`) for logical and arithmetic shifts
+
+- [x] **ROL/ROR (rotates)** - Implement rotate operations (`rol rax, 4`, `ror eax, cl`) for left and right rotations
+
+- [ ] **DIV/IDIV (division)** - Implement division operations with proper remainder handling (`div rbx`, `idiv rbx`) for unsigned and signed division
+
 ## Implementation Notes
 
 - Focus on test-driven development: write tests first, then implement

@@ -200,3 +200,228 @@ def test_imul32_signed():
     # eax=0xFFFFFFFF (-1), ebx=0x00000002 (2) -> result=0xFFFFFFFFFFFFFFFE (-2)
     # rdx=0xFFFFFFFF, eax=0xFFFFFFFE
     check_output(output_state, rax=0x00000000FFFFFFFE, rdx=0xFFFFFFFF)
+
+
+def test_lea_rax_plus_constant():
+    # lea rbx, [rax+8]
+    output_state = run("488d5808", rax=0x1000, rbx=0xDEADBEEF)
+    check_output(output_state, rax=0x1000, rbx=0x1008)
+
+
+def test_lea_rax_plus_rbx():
+    # lea rbx, [rax+rbx]
+    output_state = run("488d1c18", rax=0x1000, rbx=0x500)
+    check_output(output_state, rax=0x1000, rbx=0x1500)
+
+
+def test_lea_rax_plus_rbx_plus_constant():
+    # lea rbx, [rax+rbx+8]
+    output_state = run("488d5c1808", rax=0x1000, rbx=0x500)
+    check_output(output_state, rax=0x1000, rbx=0x1508)
+
+
+def test_lea_with_scale_factor():
+    # lea rbx, [rax+rax*2]  (rax + rax*2 = rax*3)
+    output_state = run("488d1c40", rax=0x100, rbx=0xDEADBEEF)
+    check_output(output_state, rax=0x100, rbx=0x300)
+
+
+def test_shl64_invalid_shift_count():
+    # Test that invalid shift counts are caught by the assert
+    import pytest
+
+    from vexingz3.interpreter import State
+
+    state = State()
+
+    # Test invalid shift count > 63
+    with pytest.raises(AssertionError, match="Shift count 64 out of range"):
+        state._binop_Iop_Shl64(None, 0x100, 64)
+
+    # Test negative shift count
+    with pytest.raises(AssertionError, match="Shift count -1 out of range"):
+        state._binop_Iop_Shl64(None, 0x100, -1)
+
+
+def test_shl64_basic():
+    # shl rax, 4
+    output_state = run("48c1e004", rax=0x1234567890ABCDEF)
+    check_output(output_state, rax=0x234567890ABCDEF0)
+
+
+def test_shl32_basic():
+    # shl eax, 4
+    output_state = run("c1e004", rax=0xFEDCBA9812345678)
+    check_output(output_state, rax=0x0000000023456780)
+
+
+def test_shl16_basic():
+    # shl ax, 4
+    output_state = run("66c1e004", rax=0x1234567890AB1234)
+    check_output(output_state, rax=0x1234567890AB2340)
+
+
+def test_shl8_basic():
+    # shl al, 4
+    output_state = run("c0e004", rax=0x123456789ABCDE12)
+    check_output(output_state, rax=0x123456789ABCDE20)
+
+
+def test_shr64_basic():
+    # shr rax, 4
+    output_state = run("48c1e804", rax=0x1234567890ABCDEF)
+    check_output(output_state, rax=0x01234567890ABCDE)
+
+
+def test_shr32_basic():
+    # shr eax, 4
+    output_state = run("c1e804", rax=0xFEDCBA9812345678)
+    check_output(output_state, rax=0x0000000001234567)
+
+
+def test_shr16_basic():
+    # shr ax, 4
+    output_state = run("66c1e804", rax=0x1234567890AB1234)
+    check_output(output_state, rax=0x1234567890AB0123)
+
+
+def test_shr8_basic():
+    # shr al, 4
+    output_state = run("c0e804", rax=0x123456789ABCDE12)
+    check_output(output_state, rax=0x123456789ABCDE01)
+
+
+def test_sar64_positive():
+    # sar rax, 4 (positive number)
+    output_state = run("48c1f804", rax=0x1234567890ABCDEF)
+    check_output(output_state, rax=0x01234567890ABCDE)
+
+
+def test_sar64_negative():
+    # sar rax, 4 (negative number - sign extension)
+    output_state = run("48c1f804", rax=0xFEDCBA9876543210)
+    check_output(output_state, rax=0xFFEDCBA987654321)
+
+
+def test_sar32_negative():
+    # sar eax, 4 (negative 32-bit number)
+    output_state = run("c1f804", rax=0x12345678FEDCBA98)
+    check_output(output_state, rax=0x00000000FFEDCBA9)
+
+
+def test_sar16_negative():
+    # sar ax, 4 (negative 16-bit number)
+    output_state = run("66c1f804", rax=0x123456789ABCFED0)
+    check_output(output_state, rax=0x123456789ABCFFED)
+
+
+def test_sar8_negative():
+    # sar al, 4 (negative 8-bit number)
+    output_state = run("c0f804", rax=0x123456789ABCDEF0)
+    check_output(output_state, rax=0x123456789ABCDEFF)
+
+
+def test_shl64_variable():
+    # shl rax, cl
+    output_state = run("48d3e0", rax=0x1234567890ABCDEF, rcx=0x04)
+    check_output(output_state, rax=0x234567890ABCDEF0, rcx=0x04)
+
+
+def test_shl32_variable():
+    # shl eax, cl
+    output_state = run("d3e0", rax=0xFEDCBA9812345678, rcx=0x04)
+    check_output(output_state, rax=0x0000000023456780, rcx=0x04)
+
+
+def test_shl16_variable():
+    # shl ax, cl
+    output_state = run("66d3e0", rax=0x1234567890AB1234, rcx=0x04)
+    check_output(output_state, rax=0x1234567890AB2340, rcx=0x04)
+
+
+def test_shr64_variable():
+    # shr rax, cl
+    output_state = run("48d3e8", rax=0x1234567890ABCDEF, rcx=0x04)
+    check_output(output_state, rax=0x01234567890ABCDE, rcx=0x04)
+
+
+def test_sar64_variable_negative():
+    # sar rax, cl (negative number)
+    output_state = run("48d3f8", rax=0xFEDCBA9876543210, rcx=0x04)
+    check_output(output_state, rax=0xFFEDCBA987654321, rcx=0x04)
+
+
+def test_shl64_variable_large_shift():
+    # shl rax, cl (test that shift count is properly masked)
+    output_state = run("48d3e0", rax=0x1234567890ABCDEF, rcx=0x44)  # 0x44 & 0x3f = 4
+    check_output(output_state, rax=0x234567890ABCDEF0, rcx=0x44)
+
+
+def test_rol64_basic():
+    # rol rax, 4
+    output_state = run("48c1c004", rax=0x1234567890ABCDEF)
+    # Rotate left 4: 0x1234567890ABCDEF -> 0x234567890ABCDEF1
+    check_output(output_state, rax=0x234567890ABCDEF1)
+
+
+def test_rol32_basic():
+    # rol eax, 4
+    output_state = run("c1c004", rax=0xFEDCBA9812345678)
+    # Rotate left 4: 0x12345678 -> 0x23456781
+    check_output(output_state, rax=0x0000000023456781)
+
+
+def test_rol16_basic():
+    # rol ax, 4
+    output_state = run("66c1c004", rax=0x123456789ABC1234)
+    # Rotate left 4: 0x1234 -> 0x2341
+    check_output(output_state, rax=0x123456789ABC2341)
+
+
+def test_rol8_basic():
+    # rol al, 4
+    output_state = run("c0c004", rax=0x123456789ABCDE12)
+    # Rotate left 4: 0x12 -> 0x21
+    check_output(output_state, rax=0x123456789ABCDE21)
+
+
+def test_ror64_basic():
+    # ror rax, 4
+    output_state = run("48c1c804", rax=0x1234567890ABCDEF)
+    # Rotate right 4: 0x1234567890ABCDEF -> 0xF1234567890ABCDE
+    check_output(output_state, rax=0xF1234567890ABCDE)
+
+
+def test_ror32_basic():
+    # ror eax, 4
+    output_state = run("c1c804", rax=0xFEDCBA9812345678)
+    # Rotate right 4: 0x12345678 -> 0x81234567
+    check_output(output_state, rax=0x0000000081234567)
+
+
+def test_ror16_basic():
+    # ror ax, 4
+    output_state = run("66c1c804", rax=0x123456789ABC1234)
+    # Rotate right 4: 0x1234 -> 0x4123
+    check_output(output_state, rax=0x123456789ABC4123)
+
+
+def test_ror8_basic():
+    # ror al, 4
+    output_state = run("c0c804", rax=0x123456789ABCDE12)
+    # Rotate right 4: 0x12 -> 0x21
+    check_output(output_state, rax=0x123456789ABCDE21)
+
+
+def test_rol64_variable():
+    # rol rax, cl
+    output_state = run("48d3c0", rax=0x1234567890ABCDEF, rcx=0x04)
+    # Same as rol rax, 4
+    check_output(output_state, rax=0x234567890ABCDEF1, rcx=0x04)
+
+
+def test_ror64_variable():
+    # ror rax, cl
+    output_state = run("48d3c8", rax=0x1234567890ABCDEF, rcx=0x04)
+    # Same as ror rax, 4
+    check_output(output_state, rax=0xF1234567890ABCDE, rcx=0x04)

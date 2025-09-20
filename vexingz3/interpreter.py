@@ -78,6 +78,13 @@ class State:
             return getattr(self, f"_unop_{expr.op}", self._default_unop)(expr, arg)
         elif isinstance(expr, pyvex.expr.Const):
             return expr.con.value
+        elif isinstance(expr, pyvex.expr.ITE):
+            # If-Then-Else: condition ? then_expr : else_expr
+            condition = self._eval_expression(expr.cond, arch)
+            if condition:
+                return self._eval_expression(expr.iftrue, arch)
+            else:
+                return self._eval_expression(expr.iffalse, arch)
 
         return 0
 
@@ -92,6 +99,11 @@ class State:
     def _from_signed(self, value, bitwidth):
         """Convert signed value to unsigned representation based on bit width."""
         return value if value >= 0 else value + (1 << bitwidth)
+
+    def _sign_extend(self, value, from_bitwidth, to_bitwidth):
+        """Sign-extend value from one bit width to another."""
+        signed_value = self._to_signed(value, from_bitwidth)
+        return self._from_signed(signed_value, to_bitwidth)
 
     def _binop_Iop_Add64(self, expr, left, right):
         return self._mask(left + right, 64)
@@ -217,6 +229,34 @@ class State:
         result = left_signed * right_signed
         return self._from_signed(result, 128)
 
+    def _binop_Iop_Shl64(self, expr, left, right):
+        # Left shift: left << right, mask to 64 bits
+        assert (
+            0 <= right <= 63
+        ), f"Shift count {right} out of range [0, 63] for 64-bit shift"
+        return self._mask(left << right, 64)
+
+    def _binop_Iop_Shr64(self, expr, left, right):
+        # Logical right shift: left >> right (zero fill from left)
+        assert (
+            0 <= right <= 63
+        ), f"Shift count {right} out of range [0, 63] for 64-bit shift"
+        return self._mask(left >> right, 64)
+
+    def _binop_Iop_Sar64(self, expr, left, right):
+        # Arithmetic right shift: sign-extending right shift
+        assert (
+            0 <= right <= 63
+        ), f"Shift count {right} out of range [0, 63] for 64-bit shift"
+        # Convert to signed, perform arithmetic shift, convert back
+        left_signed = self._to_signed(left, 64)
+        result = left_signed >> right
+        return self._from_signed(result, 64)
+
+    def _binop_Iop_CmpNE8(self, expr, left, right):
+        # Compare not equal: returns 1 if different, 0 if same
+        return 1 if left != right else 0
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
 
@@ -246,6 +286,21 @@ class State:
 
     def _unop_Iop_128to64(self, expr, arg):
         return self._mask(arg, 64)  # Extract low 64 bits from 128-bit value
+
+    def _unop_Iop_64to16(self, expr, arg):
+        return self._mask(arg, 16)  # Extract low 16 bits
+
+    def _unop_Iop_64to8(self, expr, arg):
+        return self._mask(arg, 8)  # Extract low 8 bits
+
+    def _unop_Iop_8Sto64(self, expr, arg):
+        return self._sign_extend(arg, 8, 64)  # Sign-extend 8 to 64
+
+    def _unop_Iop_16Sto64(self, expr, arg):
+        return self._sign_extend(arg, 16, 64)  # Sign-extend 16 to 64
+
+    def _unop_Iop_32Sto64(self, expr, arg):
+        return self._sign_extend(arg, 32, 64)  # Sign-extend 32 to 64
 
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")
