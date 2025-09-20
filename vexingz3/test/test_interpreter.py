@@ -782,3 +782,22 @@ def test_cmp_cmovg_equal():
     # When rax == rbx, should keep rcx unchanged (not greater)
     output_state = run("4839d8480f4fca", rax=5, rbx=5, rcx=0x1111, rdx=0x2222)
     check_output(output_state, rax=5, rbx=5, rcx=0x1111, rdx=0x2222)
+
+
+def test_test_rax_rbx():
+    # test rax, rbx - bitwise AND for flag setting, don't store result
+    # Should not modify any registers, just set flags
+    output_state = run("4885d8", rax=0xFF00, rbx=0x00FF)
+    check_output(output_state, rax=0xFF00, rbx=0x00FF)
+
+
+def test_test_zero_result():
+    # test rax, rbx when AND result is zero (common zero flag test)
+    output_state = run("4885d8", rax=0xF0F0, rbx=0x0F0F)
+    check_output(output_state, rax=0xF0F0, rbx=0x0F0F)
+
+
+def test_test_nonzero_result():
+    # test rax, rbx when AND result is non-zero
+    output_state = run("4885d8", rax=0xFFFF, rbx=0xFF00)
+    check_output(output_state, rax=0xFFFF, rbx=0xFF00)
