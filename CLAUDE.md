@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - please add comments very sparsely. don't explain *what* the code is doing, only why.
 - try hard to work compact code, avoiding code duplication.
 - if anything is ever unclear, please stop and ask questions. it's better to get the architecture right before starting to write a lot of code.
+- errors should never pass silently. if you add code where you don't want to implement a case (yet), add an `assert False, "TODO"`
 
 ## Project Overview
 
