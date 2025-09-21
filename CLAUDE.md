@@ -11,6 +11,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - if anything is ever unclear, please stop and ask questions. it's better to get the architecture right before starting to write a lot of code.
 - errors should never pass silently. if you add code where you don't want to implement a case (yet), add an `assert False, "TODO"`
 
+## Committing
+
+- every logical chunk of work should be its own commit.
+- before you commit, read through the diff and try to spot any code duplication
+  that could be fixed with the introduction of helper functions that abstract
+  common patterns
+- there is a pre-commit hook in place that reformats code with black. it might
+  be necessary to add those modified files again and re-do the git commit
+  command
+
 ## Project Overview
 
 This is a VEX (Valgrind Expression) project using PyVEX. The long-term goals of
