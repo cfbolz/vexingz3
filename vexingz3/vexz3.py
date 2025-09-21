@@ -1,4 +1,3 @@
-import pyvex
 import z3
 
 from vexingz3 import interpreter
@@ -59,7 +58,7 @@ class StateZ3(interpreter.State):
             inv_mask = ~mask
             return (current_value & inv_mask) | (new_value_extended & mask)
 
-    def _handle_put_statement(self, stmt, irsb):
+    def _stmt_Put(self, stmt, irsb):
         """Z3-compatible PUT statement handling."""
         reg_offset = stmt.offset
         reg_name = irsb.arch.register_names.get(reg_offset)
@@ -75,26 +74,3 @@ class StateZ3(interpreter.State):
         # Use Z3-compatible splicing
         new_value = self._splice_register_value(current_value, value, bitwidth)
         self.set_register(reg_name, new_value)
-
-    def interpret(self, irsb):
-        """Z3-compatible interpreter that handles PUT statements specially."""
-        for stmt in irsb.statements:
-            if isinstance(stmt, pyvex.stmt.IMark):
-                continue
-            elif isinstance(stmt, pyvex.stmt.WrTmp):
-                # t0 = GET:I64(rax) or t0 = Add64(t2,t1)
-                temp_name = f"t{stmt.tmp}"
-                value = self._eval_expression(stmt.data, irsb.arch)
-                self.set_temp(temp_name, value)
-            elif isinstance(stmt, pyvex.stmt.Put):
-                # Use Z3-compatible PUT handling
-                self._handle_put_statement(stmt, irsb)
-            elif isinstance(stmt, pyvex.stmt.Store):
-                # STle(address) = value - store to memory
-                address = self._eval_expression(stmt.addr, irsb.arch)
-                value = self._eval_expression(stmt.data, irsb.arch)
-                # Get bit width and convert to bytes
-                data_type = stmt.data.result_type(irsb.tyenv)
-                bitwidth = interpreter.TYPE_TO_BITWIDTH[data_type]
-                size_bytes = bitwidth // 8
-                self.write_memory(address, value, size_bytes)

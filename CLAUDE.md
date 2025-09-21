@@ -19,7 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   common patterns
 - there is a pre-commit hook in place that reformats code with black. it might
   be necessary to add those modified files again and re-do the git commit
-  command
+  command. if that happens, you *must* not use `git commit --amend`, since that
+  will modify some unrelated earlier commit.
 
 ## Project Overview
 
