@@ -1161,3 +1161,29 @@ def test_psubb_8x16():
 
     output_state = run("660ff8c1", ymm0=val1, ymm1=val2)
     check_output(output_state, ymm0=expected)
+
+
+def test_vpaddq_64x4():
+    # vpaddq ymm0, ymm1, ymm2 - AVX2 packed add 4×64-bit integers
+    # Simple test: [1, 2, 3, 4] + [10, 20, 30, 40] = [11, 22, 33, 44]
+    val1 = pack_integers([1, 2, 3, 4], 64)
+    val2 = pack_integers([10, 20, 30, 40], 64)
+    expected = pack_integers([11, 22, 33, 44], 64)
+
+    output_state = run("c5fd d4c1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_vpsubq_64x4():
+    # vpsubq ymm0, ymm1, ymm2 - AVX2 packed subtract 4×64-bit integers
+    # Simple test: [100, 200, 300, 400] - [1, 2, 3, 4] = [99, 198, 297, 396]
+    val1 = pack_integers([100, 200, 300, 400], 64)
+    val2 = pack_integers([1, 2, 3, 4], 64)
+    expected = pack_integers([99, 198, 297, 396], 64)
+
+    output_state = run("c5fd fbc1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+    # Demonstrate unpack functionality by verifying the result element by element
+    result_elements = unpack_integers(output_state.ymm0, 64, 4)
+    assert result_elements == [99, 198, 297, 396]

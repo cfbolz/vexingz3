@@ -657,6 +657,38 @@ class State:
         # Packed subtract 16×8-bit integers
         return self._packed_arithmetic(left, right, 8, 16, operator.sub)
 
+    def _binop_Iop_Add64x4(self, expr, left, right):
+        # Packed add 4×64-bit integers (AVX2): [a3,a2,a1,a0] + [b3,b2,b1,b0]
+        return self._packed_arithmetic(left, right, 64, 4, operator.add)
+
+    def _binop_Iop_Sub64x4(self, expr, left, right):
+        # Packed subtract 4×64-bit integers (AVX2): [a3,a2,a1,a0] - [b3,b2,b1,b0]
+        return self._packed_arithmetic(left, right, 64, 4, operator.sub)
+
+    def _binop_Iop_Add8x32(self, expr, left, right):
+        # Packed add 32×8-bit integers (AVX2): 256-bit vector operations
+        return self._packed_arithmetic(left, right, 8, 32, operator.add)
+
+    def _binop_Iop_Sub8x32(self, expr, left, right):
+        # Packed subtract 32×8-bit integers (AVX2): 256-bit vector operations
+        return self._packed_arithmetic(left, right, 8, 32, operator.sub)
+
+    def _binop_Iop_Add16x16(self, expr, left, right):
+        # Packed add 16×16-bit integers (AVX2): 256-bit vector operations
+        return self._packed_arithmetic(left, right, 16, 16, operator.add)
+
+    def _binop_Iop_Sub16x16(self, expr, left, right):
+        # Packed subtract 16×16-bit integers (AVX2): 256-bit vector operations
+        return self._packed_arithmetic(left, right, 16, 16, operator.sub)
+
+    def _binop_Iop_Add32x8(self, expr, left, right):
+        # Packed add 8×32-bit integers (AVX2): 256-bit vector operations
+        return self._packed_arithmetic(left, right, 32, 8, operator.add)
+
+    def _binop_Iop_Sub32x8(self, expr, left, right):
+        # Packed subtract 8×32-bit integers (AVX2): 256-bit vector operations
+        return self._packed_arithmetic(left, right, 32, 8, operator.sub)
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
 
