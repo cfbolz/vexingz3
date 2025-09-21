@@ -283,6 +283,11 @@ class State:
         mask = (1 << bitwidth) - 1
         return (current_value & ~mask) | (new_value & mask)
 
+    def _extract(self, value, high_bit, low_bit):
+        """Extract bits from high_bit to low_bit (inclusive) from value."""
+        width = high_bit - low_bit + 1
+        return self._mask(value >> low_bit, width)
+
     def _c_style_divmod(self, dividend, divisor):
         """C-style division that truncates towards zero (not Python floor division)."""
         if divisor == 0:
@@ -827,7 +832,7 @@ class State:
         raise NotImplementedError(f"Triop {expr.op} not implemented")
 
     def _unop_Iop_64to32(self, expr, arg):
-        return self._mask(arg, 32)
+        return self._extract(arg, 31, 0)
 
     def _unop_Iop_32Uto64(self, expr, arg):
         return self._zero_extend(arg, 32, 64)
@@ -839,25 +844,25 @@ class State:
         return self._zero_extend(arg, 8, 64)
 
     def _unop_Iop_64HIto32(self, expr, arg):
-        return self._mask(arg >> 32, 32)  # Extract high 32 bits
+        return self._extract(arg, 63, 32)  # Extract high 32 bits
 
     def _unop_Iop_32HIto16(self, expr, arg):
-        return self._mask(arg >> 16, 16)  # Extract high 16 bits
+        return self._extract(arg, 31, 16)  # Extract high 16 bits
 
     def _unop_Iop_32to16(self, expr, arg):
-        return self._mask(arg, 16)  # Extract low 16 bits
+        return self._extract(arg, 15, 0)  # Extract low 16 bits
 
     def _unop_Iop_128HIto64(self, expr, arg):
-        return self._mask(arg >> 64, 64)  # Extract high 64 bits from 128-bit value
+        return self._extract(arg, 127, 64)  # Extract high 64 bits from 128-bit value
 
     def _unop_Iop_128to64(self, expr, arg):
-        return self._mask(arg, 64)  # Extract low 64 bits from 128-bit value
+        return self._extract(arg, 63, 0)  # Extract low 64 bits from 128-bit value
 
     def _unop_Iop_64to16(self, expr, arg):
-        return self._mask(arg, 16)  # Extract low 16 bits
+        return self._extract(arg, 15, 0)  # Extract low 16 bits
 
     def _unop_Iop_64to8(self, expr, arg):
-        return self._mask(arg, 8)  # Extract low 8 bits
+        return self._extract(arg, 7, 0)  # Extract low 8 bits
 
     def _unop_Iop_8Sto64(self, expr, arg):
         return self._sign_extend(arg, 8, 64)  # Sign-extend 8 to 64
@@ -881,7 +886,7 @@ class State:
         return self._sign_extend(arg, 8, 16)  # Sign-extend 8 to 16
 
     def _unop_Iop_16to8(self, expr, arg):
-        return self._mask(arg, 8)  # Extract low 8 bits from 16
+        return self._extract(arg, 7, 0)  # Extract low 8 bits from 16
 
     def _unop_Iop_Not8(self, expr, arg):
         return self._mask(~arg, 8)  # Bitwise NOT with 8-bit mask
@@ -899,7 +904,7 @@ class State:
         return self._zero_extend(arg, 1, 64)
 
     def _unop_Iop_64to1(self, expr, arg):
-        return self._mask(arg, 1)  # Extract low 1 bit
+        return self._extract(arg, 0, 0)  # Extract low 1 bit
 
     def _unop_Iop_NotV128(self, expr, arg):
         # 128-bit bitwise NOT - complement all bits

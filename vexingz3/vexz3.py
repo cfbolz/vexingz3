@@ -29,13 +29,6 @@ class StateZ3(interpreter.State):
             return self._mask(value, to_bitwidth)
         return z3.ZeroExt(extension_bits, value)
 
-    def _unop_Iop_64to32(self, expr, arg):
-        """Z3 implementation of 64-bit to 32-bit conversion."""
-        if isinstance(arg, int):
-            return super()._unop_Iop_64to32(expr, arg)
-        # Extract lower 32 bits
-        return z3.Extract(31, 0, arg)
-
     def _sign_extend(self, value, from_bitwidth, to_bitwidth):
         """Z3 implementation of sign extension."""
         if isinstance(value, int):
@@ -45,6 +38,13 @@ class StateZ3(interpreter.State):
         if extension_bits <= 0:
             return self._mask(value, to_bitwidth)
         return z3.SignExt(extension_bits, value)
+
+    def _extract(self, value, high_bit, low_bit):
+        """Z3 implementation of bit extraction."""
+        if isinstance(value, int):
+            return super()._extract(value, high_bit, low_bit)
+        # Extract bits using Z3
+        return z3.Extract(high_bit, low_bit, value)
 
     def _binop_Iop_Shl64(self, expr, left, right):
         """Z3 implementation of 64-bit left shift."""
