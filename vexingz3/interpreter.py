@@ -32,12 +32,12 @@ class State:
 
     def read_memory(self, address, size_bytes):
         """Read little-endian value from memory at given address."""
-        value = 0
+        bytes_values = []
         for i in range(size_bytes):
             byte_addr = address + i
             byte_value = self.memory.get(byte_addr, 0)
-            value |= byte_value << (i * 8)
-        return value
+            bytes_values.append(byte_value)
+        return self._concat_bits(bytes_values, 8)
 
     def write_memory(self, address, value, size_bytes):
         """Write little-endian value to memory at given address."""
@@ -72,18 +72,16 @@ class State:
         Returns:
             Packed result value
         """
-        result = 0
+        result_elements = []
         for i in range(count):
             left_elem = self._extract_packed_element(left, width, i)
             right_elem = self._extract_packed_element(right, width, i)
 
             # Apply operation with overflow/underflow wrapping
             result_elem = self._mask(operation(left_elem, right_elem), width)
+            result_elements.append(result_elem)
 
-            # Place result in correct position
-            result |= result_elem << (i * width)
-
-        return result
+        return self._concat_bits(result_elements, width)
 
     def _packed_shift(self, value, shift_amount, width, count, shift_op):
         """Generic helper for packed shift operations.
@@ -98,20 +96,18 @@ class State:
         Returns:
             Packed result value
         """
-        result = 0
         # Mask shift amount to valid range for the element width
         shift_amount = shift_amount & (width - 1)
 
+        result_elements = []
         for i in range(count):
             element = self._extract_packed_element(value, width, i)
 
             # Apply shift operation with proper masking
             shifted_elem = self._mask(shift_op(element, shift_amount), width)
+            result_elements.append(shifted_elem)
 
-            # Place result in correct position
-            result |= shifted_elem << (i * width)
-
-        return result
+        return self._concat_bits(result_elements, width)
 
     def _arithmetic_right_shift(self, value, shift_amount, width):
         """Generic helper for arithmetic right shift that preserves sign bit.
@@ -287,6 +283,21 @@ class State:
         """Extract bits from high_bit to low_bit (inclusive) from value."""
         width = high_bit - low_bit + 1
         return self._mask(value >> low_bit, width)
+
+    def _concat_bits(self, elements, element_width):
+        """Concatenate multiple elements into a single larger value.
+
+        Args:
+            elements: List of values to concatenate (element 0 goes in low bits)
+            element_width: Bit width of each element
+
+        Returns:
+            Single value with elements concatenated
+        """
+        result = 0
+        for i, element in enumerate(elements):
+            result |= self._mask(element, element_width) << (i * element_width)
+        return result
 
     def _c_style_divmod(self, dividend, divisor):
         """C-style division that truncates towards zero (not Python floor division)."""

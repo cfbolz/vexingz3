@@ -46,6 +46,31 @@ class StateZ3(interpreter.State):
         # Extract bits using Z3
         return z3.Extract(high_bit, low_bit, value)
 
+    def _concat_bits(self, elements, element_width):
+        """Z3 implementation of bit concatenation."""
+        if all(isinstance(elem, int) for elem in elements):
+            return super()._concat_bits(elements, element_width)
+
+        # Convert ints to Z3 BitVecs and concatenate using z3.Concat
+        z3_elements = []
+        for element in elements:
+            if isinstance(element, int):
+                z3_elements.append(z3.BitVecVal(element, element_width))
+            else:
+                # Ensure element has correct bit width
+                if element.sort().size() != element_width:
+                    if element.sort().size() > element_width:
+                        element = z3.Extract(element_width - 1, 0, element)
+                    else:
+                        element = z3.ZeroExt(
+                            element_width - element.sort().size(), element
+                        )
+                z3_elements.append(element)
+
+        # Z3 Concat concatenates with the first argument as high bits
+        # But our elements list has element 0 as low bits, so reverse
+        return z3.Concat(*reversed(z3_elements))
+
     def _binop_Iop_Shl64(self, expr, left, right):
         """Z3 implementation of 64-bit left shift."""
         if isinstance(left, int) and isinstance(right, int):
