@@ -36,6 +36,43 @@ def int_to_float(int_val, precision="single"):
         return struct.unpack("<d", bytes_val)[0]
 
 
+def pack_integers(integers, width):
+    """Pack a list of integers into a single packed value.
+
+    Args:
+        integers: List of integers to pack (in little-endian order: [elem0, elem1, ...])
+        width: Bit width of each element (8, 16, 32, or 64)
+
+    Returns:
+        Packed integer value
+    """
+    result = 0
+    for i, value in enumerate(integers):
+        mask = (1 << width) - 1
+        masked_value = value & mask
+        result |= masked_value << (i * width)
+    return result
+
+
+def unpack_integers(packed_value, width, count):
+    """Unpack a packed integer value into a list of integers.
+
+    Args:
+        packed_value: The packed integer value
+        width: Bit width of each element (8, 16, 32, or 64)
+        count: Number of elements to extract
+
+    Returns:
+        List of integers in little-endian order: [elem0, elem1, ...]
+    """
+    mask = (1 << width) - 1
+    result = []
+    for i in range(count):
+        element = (packed_value >> (i * width)) & mask
+        result.append(element)
+    return result
+
+
 def run(instruction, **initial_state):
     """Helper to run instruction with given register state and memory."""
     inp = bytes.fromhex(instruction)
@@ -1020,4 +1057,107 @@ def test_vpxor_256bit():
     expected = val1 ^ val2
 
     output_state = run("c5f5efc2", ymm1=val1, ymm2=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_paddd_32x4():
+    # paddd xmm0, xmm1 - packed add 4×32-bit integers
+    # Simple test: [1, 2, 3, 4] + [10, 20, 30, 40] = [11, 22, 33, 44]
+    val1 = pack_integers([1, 2, 3, 4], 32)
+    val2 = pack_integers([10, 20, 30, 40], 32)
+    expected = pack_integers([11, 22, 33, 44], 32)
+
+    output_state = run("660ffec1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_psubd_32x4():
+    # psubd xmm0, xmm1 - packed subtract 4×32-bit integers
+    # Simple test: [100, 50, 25, 10] - [1, 2, 3, 4] = [99, 48, 22, 6]
+    val1 = pack_integers([100, 50, 25, 10], 32)
+    val2 = pack_integers([1, 2, 3, 4], 32)
+    expected = pack_integers([99, 48, 22, 6], 32)
+
+    output_state = run("660ffac1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+    # Demonstrate unpack functionality by verifying the result element by element
+    result_elements = unpack_integers(output_state.ymm0, 32, 4)
+    assert result_elements == [99, 48, 22, 6]
+
+
+def test_paddq_64x2():
+    # paddq xmm0, xmm1 - packed add 2×64-bit integers
+    # Simple test: [0x100, 0x200] + [0x111, 0x222] = [0x211, 0x422]
+    val1 = (0x200 << 64) | 0x100  # [0x100, 0x200]
+    val2 = (0x222 << 64) | 0x111  # [0x111, 0x222]
+    expected = (0x422 << 64) | 0x211  # [0x211, 0x422]
+
+    output_state = run("660fd4c1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_psubq_64x2():
+    # psubq xmm0, xmm1 - packed subtract 2×64-bit integers
+    # Simple test: [0x1000, 0x2000] - [0x111, 0x222] = [0xEEF, 0x1DDE]
+    val1 = (0x2000 << 64) | 0x1000  # [0x1000, 0x2000]
+    val2 = (0x222 << 64) | 0x111  # [0x111, 0x222]
+    expected = (0x1DDE << 64) | 0xEEF  # [0xEEF, 0x1DDE]
+
+    output_state = run("660ffbc1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_paddw_16x8():
+    # paddw xmm0, xmm1 - packed add 8×16-bit integers
+    # Simple test: [1, 2, 3, 4, 5, 6, 7, 8] + [10, 20, 30, 40, 50, 60, 70, 80]
+    val1 = sum(i << (j * 16) for j, i in enumerate([1, 2, 3, 4, 5, 6, 7, 8]))
+    val2 = sum(i << (j * 16) for j, i in enumerate([10, 20, 30, 40, 50, 60, 70, 80]))
+    expected = sum(
+        i << (j * 16) for j, i in enumerate([11, 22, 33, 44, 55, 66, 77, 88])
+    )
+
+    output_state = run("660ffdc1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_psubw_16x8():
+    # psubw xmm0, xmm1 - packed subtract 8×16-bit integers
+    # Simple test: [100, 200, 300, 400, 500, 600, 700, 800] - [1, 2, 3, 4, 5, 6, 7, 8]
+    val1 = sum(
+        i << (j * 16) for j, i in enumerate([100, 200, 300, 400, 500, 600, 700, 800])
+    )
+    val2 = sum(i << (j * 16) for j, i in enumerate([1, 2, 3, 4, 5, 6, 7, 8]))
+    expected = sum(
+        i << (j * 16) for j, i in enumerate([99, 198, 297, 396, 495, 594, 693, 792])
+    )
+
+    output_state = run("660ff9c1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_paddb_8x16():
+    # paddb xmm0, xmm1 - packed add 16×8-bit integers
+    # Simple test: 16 8-bit integers addition
+    val1 = sum(i << (j * 8) for j, i in enumerate(range(1, 17)))
+    val2 = sum(i << (j * 8) for j, i in enumerate(range(10, 161, 10)))
+    expected = sum(
+        i << (j * 8)
+        for j, i in enumerate(
+            [11, 22, 33, 44, 55, 66, 77, 88, 99, 110, 121, 132, 143, 154, 165, 176]
+        )
+    )
+
+    output_state = run("660ffcc1", ymm0=val1, ymm1=val2)
+    check_output(output_state, ymm0=expected)
+
+
+def test_psubb_8x16():
+    # psubb xmm0, xmm1 - packed subtract 16×8-bit integers
+    # Simple test: subtract 1 from each element [100,101,102,...,115] - [1,1,1,...,1]
+    val1 = sum(i << (j * 8) for j, i in enumerate(range(100, 116)))
+    val2 = sum(1 << (j * 8) for j in range(16))
+    expected = sum(i << (j * 8) for j, i in enumerate(range(99, 115)))
+
+    output_state = run("660ff8c1", ymm0=val1, ymm1=val2)
     check_output(output_state, ymm0=expected)
