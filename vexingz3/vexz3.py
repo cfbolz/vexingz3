@@ -36,9 +36,7 @@ class StateZ3(interpreter.State):
     def _splice_register_value(self, current_value, new_value, bitwidth):
         """Z3-compatible register value splicing."""
         if isinstance(current_value, int) and isinstance(new_value, int):
-            # Fall back to parent logic for concrete values
-            mask = (1 << bitwidth) - 1
-            return (current_value & ~mask) | (new_value & mask)
+            return super()._splice_register_value(current_value, new_value, bitwidth)
 
         # Convert integers to Z3 BitVecs if needed
         if isinstance(current_value, int):
