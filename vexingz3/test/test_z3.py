@@ -111,3 +111,54 @@ def test_imul8_bl_symbolic():
     assert (
         s.check() == z3.unsat
     ), "IMUL should produce correct result for AL=0xFF, BL=0x02"
+
+
+def test_shl64_rax():
+    """Test SHL RAX, 4 with symbolic values"""
+    rax = z3.BitVec("rax_init", 64)
+    output_state = run("48c1e004", rax=rax)  # shl rax, 4
+    assert_z3_equivalent(output_state[0]["rax"], rax << 4)
+
+
+def test_shr64_rax():
+    """Test SHR RAX, 4 with symbolic values"""
+    rax = z3.BitVec("rax_init", 64)
+    output_state = run("48c1e804", rax=rax)  # shr rax, 4
+    assert_z3_equivalent(output_state[0]["rax"], z3.LShR(rax, 4))
+
+
+def test_sar64_rax():
+    """Test SAR RAX, 4 with symbolic values"""
+    rax = z3.BitVec("rax_init", 64)
+    output_state = run("48c1f804", rax=rax)  # sar rax, 4
+    assert_z3_equivalent(output_state[0]["rax"], rax >> 4)
+
+
+def test_shl32_eax():
+    """Test SHL EAX, 4 with symbolic values"""
+    rax = z3.BitVec("rax_init", 64)
+    output_state = run("c1e004", rax=rax)  # shl eax, 4
+    # 32-bit operation should zero upper bits and shift lower 32 bits
+    eax = z3.Extract(31, 0, rax)
+    expected = z3.ZeroExt(32, eax << 4)
+    assert_z3_equivalent(output_state[0]["rax"], expected)
+
+
+def test_shr32_eax():
+    """Test SHR EAX, 4 with symbolic values"""
+    rax = z3.BitVec("rax_init", 64)
+    output_state = run("c1e804", rax=rax)  # shr eax, 4
+    # 32-bit operation should zero upper bits and shift lower 32 bits
+    eax = z3.Extract(31, 0, rax)
+    expected = z3.ZeroExt(32, z3.LShR(eax, 4))
+    assert_z3_equivalent(output_state[0]["rax"], expected)
+
+
+def test_sar32_eax():
+    """Test SAR EAX, 4 with symbolic values"""
+    rax = z3.BitVec("rax_init", 64)
+    output_state = run("c1f804", rax=rax)  # sar eax, 4
+    # 32-bit operation should zero upper bits and arithmetic shift lower 32 bits
+    eax = z3.Extract(31, 0, rax)
+    expected = z3.ZeroExt(32, eax >> 4)
+    assert_z3_equivalent(output_state[0]["rax"], expected)

@@ -830,10 +830,10 @@ class State:
         return self._mask(arg, 32)
 
     def _unop_Iop_32Uto64(self, expr, arg):
-        return self._mask(arg, 32)  # zero-extend to 64 bits (already done by mask)
+        return self._zero_extend(arg, 32, 64)
 
     def _unop_Iop_16Uto64(self, expr, arg):
-        return self._mask(arg, 16)  # zero-extend to 64 bits (already done by mask)
+        return self._zero_extend(arg, 16, 64)
 
     def _unop_Iop_8Uto64(self, expr, arg):
         return self._zero_extend(arg, 8, 64)
@@ -869,10 +869,10 @@ class State:
         return self._sign_extend(arg, 32, 64)  # Sign-extend 32 to 64
 
     def _unop_Iop_16Uto32(self, expr, arg):
-        return self._mask(arg, 16)  # Zero-extend 16 to 32
+        return self._zero_extend(arg, 16, 32)
 
     def _unop_Iop_8Uto16(self, expr, arg):
-        return self._mask(arg, 8)  # Zero-extend 8 to 16
+        return self._zero_extend(arg, 8, 16)
 
     def _unop_Iop_16Sto32(self, expr, arg):
         return self._sign_extend(arg, 16, 32)  # Sign-extend 16 to 32
@@ -896,7 +896,7 @@ class State:
         return self._mask(~arg, 64)  # Bitwise NOT with 64-bit mask
 
     def _unop_Iop_1Uto64(self, expr, arg):
-        return self._mask(arg, 1)  # Zero-extend 1-bit to 64-bit (already done by mask)
+        return self._zero_extend(arg, 1, 64)
 
     def _unop_Iop_64to1(self, expr, arg):
         return self._mask(arg, 1)  # Extract low 1 bit

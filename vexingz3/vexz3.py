@@ -29,6 +29,95 @@ class StateZ3(interpreter.State):
             return self._mask(value, to_bitwidth)
         return z3.ZeroExt(extension_bits, value)
 
+    def _unop_Iop_64to32(self, expr, arg):
+        """Z3 implementation of 64-bit to 32-bit conversion."""
+        if isinstance(arg, int):
+            return super()._unop_Iop_64to32(expr, arg)
+        # Extract lower 32 bits
+        return z3.Extract(31, 0, arg)
+
+    def _sign_extend(self, value, from_bitwidth, to_bitwidth):
+        """Z3 implementation of sign extension."""
+        if isinstance(value, int):
+            return super()._sign_extend(value, from_bitwidth, to_bitwidth)
+        # Sign-extend using Z3
+        extension_bits = to_bitwidth - from_bitwidth
+        if extension_bits <= 0:
+            return self._mask(value, to_bitwidth)
+        return z3.SignExt(extension_bits, value)
+
+    def _binop_Iop_Shl64(self, expr, left, right):
+        """Z3 implementation of 64-bit left shift."""
+        if isinstance(left, int) and isinstance(right, int):
+            return super()._binop_Iop_Shl64(expr, left, right)
+        # For Z3 expressions, ensure both operands have same bit width
+        if isinstance(right, int):
+            right = z3.BitVecVal(right, 64)
+        elif right.sort().size() < 64:
+            right = z3.ZeroExt(64 - right.sort().size(), right)
+        return left << right
+
+    def _binop_Iop_Shr64(self, expr, left, right):
+        """Z3 implementation of 64-bit logical right shift."""
+        if isinstance(left, int) and isinstance(right, int):
+            return super()._binop_Iop_Shr64(expr, left, right)
+        # For Z3 expressions, ensure both operands have same bit width
+        if isinstance(right, int):
+            right = z3.BitVecVal(right, 64)
+        elif right.sort().size() < 64:
+            right = z3.ZeroExt(64 - right.sort().size(), right)
+        return z3.LShR(left, right)
+
+    def _binop_Iop_Sar64(self, expr, left, right):
+        """Z3 implementation of 64-bit arithmetic right shift."""
+        if isinstance(left, int) and isinstance(right, int):
+            return super()._binop_Iop_Sar64(expr, left, right)
+        # For Z3 expressions, ensure both operands have same bit width
+        if isinstance(right, int):
+            right = z3.BitVecVal(right, 64)
+        elif right.sort().size() < 64:
+            right = z3.ZeroExt(64 - right.sort().size(), right)
+        return left >> right
+
+    def _binop_Iop_Shl32(self, expr, left, right):
+        """Z3 implementation of 32-bit left shift."""
+        if isinstance(left, int) and isinstance(right, int):
+            return super()._binop_Iop_Shl32(expr, left, right)
+        # For Z3 expressions, ensure both operands have same bit width
+        if isinstance(right, int):
+            right = z3.BitVecVal(right, 32)
+        elif right.sort().size() < 32:
+            right = z3.ZeroExt(32 - right.sort().size(), right)
+        elif right.sort().size() > 32:
+            right = z3.Extract(31, 0, right)
+        return left << right
+
+    def _binop_Iop_Shr32(self, expr, left, right):
+        """Z3 implementation of 32-bit logical right shift."""
+        if isinstance(left, int) and isinstance(right, int):
+            return super()._binop_Iop_Shr32(expr, left, right)
+        # For Z3 expressions, ensure both operands have same bit width
+        if isinstance(right, int):
+            right = z3.BitVecVal(right, 32)
+        elif right.sort().size() < 32:
+            right = z3.ZeroExt(32 - right.sort().size(), right)
+        elif right.sort().size() > 32:
+            right = z3.Extract(31, 0, right)
+        return z3.LShR(left, right)
+
+    def _binop_Iop_Sar32(self, expr, left, right):
+        """Z3 implementation of 32-bit arithmetic right shift."""
+        if isinstance(left, int) and isinstance(right, int):
+            return super()._binop_Iop_Sar32(expr, left, right)
+        # For Z3 expressions, ensure both operands have same bit width
+        if isinstance(right, int):
+            right = z3.BitVecVal(right, 32)
+        elif right.sort().size() < 32:
+            right = z3.ZeroExt(32 - right.sort().size(), right)
+        elif right.sort().size() > 32:
+            right = z3.Extract(31, 0, right)
+        return left >> right
+
     def _check_expression_result_type(self, expr, res):
         # check that z3 bit vector sort is of the same size as the vex type says
         assert res.sort().size() == expr.result_size(self._current_irsb.tyenv)
