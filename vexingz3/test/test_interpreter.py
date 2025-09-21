@@ -73,13 +73,12 @@ def unpack_integers(packed_value, width, count):
     return result
 
 
-def run(instruction, **initial_state):
+def run(instruction, memory=None, **initial_state):
     """Helper to run instruction with given register state and memory."""
     inp = bytes.fromhex(instruction)
     irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
 
-    # Separate memory from register state
-    memory = initial_state.pop("memory", {})
+    memory = memory if memory is not None else {}
 
     registers, final_memory = interpret(irsb, initial_state, memory)
 

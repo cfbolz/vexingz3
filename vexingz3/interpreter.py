@@ -148,7 +148,7 @@ class State:
                     raise NotImplementedError(f"Unknown register offset {reg_offset}")
                 # Splice value into register based on data type
                 data_type = stmt.data.result_type(irsb.tyenv)
-                bitwidth = TYPE_TO_BITWIDTH.get(data_type, 64)
+                bitwidth = TYPE_TO_BITWIDTH[data_type]
                 current_value = self.get_register(reg_name)
                 mask = (1 << bitwidth) - 1
                 new_value = (current_value & ~mask) | (value & mask)
@@ -164,64 +164,77 @@ class State:
                 self.write_memory(address, value, size_bytes)
 
     def _eval_expression(self, expr, arch):
-        if isinstance(expr, pyvex.expr.Get):
-            # GET:I64(rax) or GET:I8(offset=16) for al
-            reg_name = arch.register_names.get(expr.offset)
-            if reg_name:
-                reg_value = self.get_register(reg_name)
-                # Extract bits based on type
-                bitwidth = TYPE_TO_BITWIDTH.get(expr.ty)
-                if bitwidth:
-                    return self._mask(reg_value, bitwidth)
-                else:
-                    return reg_value
-            return 0
-        elif isinstance(expr, pyvex.expr.RdTmp):
-            # t0, t1, etc
-            temp_name = f"t{expr.tmp}"
-            return self.get_temp(temp_name)
-        elif isinstance(expr, pyvex.expr.Binop):
-            # Standard 2-argument binop
-            left = self._eval_expression(expr.args[0], arch)
-            right = self._eval_expression(expr.args[1], arch)
-            return getattr(self, f"_binop_{expr.op}", self._default_binop)(
-                expr, left, right
-            )
-        elif isinstance(expr, pyvex.expr.Unop):
-            arg = self._eval_expression(expr.args[0], arch)
-            return getattr(self, f"_unop_{expr.op}", self._default_unop)(expr, arg)
-        elif isinstance(expr, pyvex.expr.Triop):
-            # 3-operand operations like Add32Fx4(rounding_mode, left, right)
-            arg0 = self._eval_expression(expr.args[0], arch)
-            arg1 = self._eval_expression(expr.args[1], arch)
-            arg2 = self._eval_expression(expr.args[2], arch)
-            return getattr(self, f"_triop_{expr.op}", self._default_triop)(
-                expr, arg0, arg1, arg2
-            )
-        elif isinstance(expr, pyvex.expr.Const):
-            return expr.con.value
-        elif isinstance(expr, pyvex.expr.ITE):
-            # If-Then-Else: condition ? then_expr : else_expr
-            condition = self._eval_expression(expr.cond, arch)
-            if condition:
-                return self._eval_expression(expr.iftrue, arch)
+        return getattr(
+            self, f"_eval_expr_{expr.__class__.__name__}", self._default_eval_expr
+        )(expr, arch)
+
+    def _default_eval_expr(self, expr, arch):
+        raise NotImplementedError(
+            f"Expression type {type(expr)} not implemented: {expr}"
+        )
+
+    def _eval_expr_Get(self, expr, arch):
+        # GET:I64(rax) or GET:I8(offset=16) for al
+        reg_name = arch.register_names.get(expr.offset)
+        if reg_name:
+            reg_value = self.get_register(reg_name)
+            # Extract bits based on type
+            bitwidth = TYPE_TO_BITWIDTH.get(expr.ty)
+            if bitwidth:
+                return self._mask(reg_value, bitwidth)
             else:
-                return self._eval_expression(expr.iffalse, arch)
-        elif isinstance(expr, pyvex.expr.Load):
-            # LDle:I64(address) - load from memory
-            address = self._eval_expression(expr.addr, arch)
-            # Get bit width and convert to bytes
-            bitwidth = TYPE_TO_BITWIDTH[expr.ty]
-            size_bytes = bitwidth // 8
-            return self.read_memory(address, size_bytes)
-        elif isinstance(expr, pyvex.expr.CCall):
-            # VEX helper function calls - for simplicity, return 0 for now
-            # These are typically for complex operations like flag calculations
-            return 0
+                return reg_value
+        return 0
+
+    def _eval_expr_RdTmp(self, expr, arch):
+        # t0, t1, etc
+        temp_name = f"t{expr.tmp}"
+        return self.get_temp(temp_name)
+
+    def _eval_expr_Binop(self, expr, arch):
+        # Standard 2-argument binop
+        left = self._eval_expression(expr.args[0], arch)
+        right = self._eval_expression(expr.args[1], arch)
+        return getattr(self, f"_binop_{expr.op}", self._default_binop)(
+            expr, left, right
+        )
+
+    def _eval_expr_Unop(self, expr, arch):
+        arg = self._eval_expression(expr.args[0], arch)
+        return getattr(self, f"_unop_{expr.op}", self._default_unop)(expr, arg)
+
+    def _eval_expr_Triop(self, expr, arch):
+        # 3-operand operations like Add32Fx4(rounding_mode, left, right)
+        arg0 = self._eval_expression(expr.args[0], arch)
+        arg1 = self._eval_expression(expr.args[1], arch)
+        arg2 = self._eval_expression(expr.args[2], arch)
+        return getattr(self, f"_triop_{expr.op}", self._default_triop)(
+            expr, arg0, arg1, arg2
+        )
+
+    def _eval_expr_Const(self, expr, arch):
+        return expr.con.value
+
+    def _eval_expr_ITE(self, expr, arch):
+        # If-Then-Else: condition ? then_expr : else_expr
+        condition = self._eval_expression(expr.cond, arch)
+        if condition:
+            return self._eval_expression(expr.iftrue, arch)
         else:
-            raise NotImplementedError(
-                f"Expression type {type(expr)} not implemented: {expr}"
-            )
+            return self._eval_expression(expr.iffalse, arch)
+
+    def _eval_expr_Load(self, expr, arch):
+        # LDle:I64(address) - load from memory
+        address = self._eval_expression(expr.addr, arch)
+        # Get bit width and convert to bytes
+        bitwidth = TYPE_TO_BITWIDTH[expr.ty]
+        size_bytes = bitwidth // 8
+        return self.read_memory(address, size_bytes)
+
+    def _eval_expr_CCall(self, expr, arch):
+        # VEX helper function calls - for simplicity, return 0 for now
+        # These are typically for complex operations like flag calculations
+        return 0
 
     def _mask(self, value, bitwidth):
         return value & ((1 << bitwidth) - 1)
