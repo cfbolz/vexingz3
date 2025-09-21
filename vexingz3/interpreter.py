@@ -502,19 +502,19 @@ class State:
         # Combine high:low 64-bit values into 128-bit value
         high = self._mask(left, 64)
         low = self._mask(right, 64)
-        return (high << 64) | low
+        return self._concat_bits([low, high], 64)
 
     def _binop_Iop_32HLto64(self, expr, left, right):
         # Combine high:low 32-bit values into 64-bit value
         high = self._mask(left, 32)
         low = self._mask(right, 32)
-        return (high << 32) | low
+        return self._concat_bits([low, high], 32)
 
     def _binop_Iop_16HLto32(self, expr, left, right):
         # Combine high:low 16-bit values into 32-bit value
         high = self._mask(left, 16)
         low = self._mask(right, 16)
-        return (high << 16) | low
+        return self._concat_bits([low, high], 16)
 
     def _binop_Iop_DivModU128to64(self, expr, left, right):
         # Unsigned division: 128-bit dividend / 64-bit divisor
@@ -526,7 +526,9 @@ class State:
         quotient = dividend // divisor
         remainder = dividend % divisor
         # Pack quotient (low) and remainder (high) into 128-bit result
-        return self._mask(remainder, 64) << 64 | self._mask(quotient, 64)
+        return self._concat_bits(
+            [self._mask(quotient, 64), self._mask(remainder, 64)], 64
+        )
 
     def _binop_Iop_DivModU64to32(self, expr, left, right):
         # Unsigned division: 64-bit dividend / 32-bit divisor
@@ -538,7 +540,9 @@ class State:
         quotient = dividend // divisor
         remainder = dividend % divisor
         # Pack quotient (low) and remainder (high) into 64-bit result
-        return self._mask(remainder, 32) << 32 | self._mask(quotient, 32)
+        return self._concat_bits(
+            [self._mask(quotient, 32), self._mask(remainder, 32)], 32
+        )
 
     def _binop_Iop_DivModS128to64(self, expr, left, right):
         # Signed division: 128-bit dividend / 64-bit divisor
@@ -549,8 +553,8 @@ class State:
         # Convert back to unsigned and pack
         quotient_unsigned = self._from_signed(quotient, 64)
         remainder_unsigned = self._from_signed(remainder, 64)
-        return self._mask(remainder_unsigned, 64) << 64 | self._mask(
-            quotient_unsigned, 64
+        return self._concat_bits(
+            [self._mask(quotient_unsigned, 64), self._mask(remainder_unsigned, 64)], 64
         )
 
     def _binop_Iop_DivModS64to32(self, expr, left, right):
@@ -562,8 +566,8 @@ class State:
         # Convert back to unsigned and pack
         quotient_unsigned = self._from_signed(quotient, 32)
         remainder_unsigned = self._from_signed(remainder, 32)
-        return self._mask(remainder_unsigned, 32) << 32 | self._mask(
-            quotient_unsigned, 32
+        return self._concat_bits(
+            [self._mask(quotient_unsigned, 32), self._mask(remainder_unsigned, 32)], 32
         )
 
     def _binop_Iop_CmpLT64S(self, expr, left, right):
@@ -633,8 +637,8 @@ class State:
         result_low = self._double_to_int(result_float)
 
         # Preserve upper 64 bits from left operand, replace lower 64 bits
-        left_high = (left >> 64) & ((1 << 64) - 1)
-        return (left_high << 64) | result_low
+        left_high = self._extract(left, 127, 64)
+        return self._concat_bits([result_low, left_high], 64)
 
     def _float_binop_32f0x4(self, left, right, operation):
         """
@@ -655,8 +659,8 @@ class State:
         result_low = self._single_to_int(result_float)
 
         # Preserve upper 96 bits from left operand, replace lower 32 bits
-        left_upper = (left >> 32) & ((1 << 96) - 1)
-        return (left_upper << 32) | result_low
+        left_upper = self._extract(left, 127, 32)
+        return self._concat_bits([result_low, left_upper], 32)
 
     # Floating point operations
     def _binop_Iop_Add64F0x2(self, expr, left, right):
