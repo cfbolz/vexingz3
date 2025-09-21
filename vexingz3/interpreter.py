@@ -18,7 +18,7 @@ class State:
         self.temps = {}
         self.memory = memory or {}
 
-    def get_register(self, reg_name):
+    def get_register(self, reg_name, bitwidth):
         return self.registers.get(reg_name, 0)
 
     def set_register(self, reg_name, value):
@@ -156,7 +156,7 @@ class State:
         # Splice value into register based on data type
         data_type = stmt.data.result_type(irsb.tyenv)
         bitwidth = TYPE_TO_BITWIDTH[data_type]
-        current_value = self.get_register(reg_name)
+        current_value = self.get_register(reg_name, bitwidth)
         new_value = self._splice_register_value(current_value, value, bitwidth)
         self.set_register(reg_name, new_value)
 
@@ -194,9 +194,9 @@ class State:
         # GET:I64(rax) or GET:I8(offset=16) for al
         reg_name = arch.register_names.get(expr.offset)
         if reg_name:
-            reg_value = self.get_register(reg_name)
-            # Extract bits based on type
             bitwidth = TYPE_TO_BITWIDTH.get(expr.ty)
+            reg_value = self.get_register(reg_name, bitwidth)
+            # Extract bits based on type
             if bitwidth:
                 return self._mask(reg_value, bitwidth)
             else:

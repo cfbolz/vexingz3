@@ -4,6 +4,9 @@ from vexingz3 import interpreter
 
 
 class StateZ3(interpreter.State):
+    def get_register(self, reg_name, bitwidth):
+        return self.registers.get(reg_name, z3.BitVecVal(0, bitwidth))
+
     def _mask(self, value, bitwidth):
         if value.sort().size() == bitwidth:
             return value
@@ -12,10 +15,6 @@ class StateZ3(interpreter.State):
 
     def _binop_Iop_MullS8(self, expr, left, right):
         """Z3 implementation of signed 8-bit multiply -> 16-bit result."""
-        if isinstance(left, int) and isinstance(right, int):
-            # Fall back to parent implementation for concrete values
-            return super()._binop_Iop_MullS8(expr, left, right)
-
         # For Z3 expressions, sign-extend to 16-bit and multiply
         left_16 = z3.SignExt(8, left)  # 8-bit -> 16-bit signed extension
         right_16 = z3.SignExt(8, right)  # 8-bit -> 16-bit signed extension
@@ -31,8 +30,6 @@ class StateZ3(interpreter.State):
 
     def _sign_extend(self, value, from_bitwidth, to_bitwidth):
         """Z3 implementation of sign extension."""
-        if isinstance(value, int):
-            return super()._sign_extend(value, from_bitwidth, to_bitwidth)
         # Sign-extend using Z3
         extension_bits = to_bitwidth - from_bitwidth
         if extension_bits <= 0:
@@ -41,77 +38,40 @@ class StateZ3(interpreter.State):
 
     def _extract(self, value, high_bit, low_bit):
         """Z3 implementation of bit extraction."""
-        if isinstance(value, int):
-            return super()._extract(value, high_bit, low_bit)
         # Extract bits using Z3
         return z3.Extract(high_bit, low_bit, value)
 
     def _concat_bits(self, elements, element_width):
         """Z3 implementation of bit concatenation."""
-        if all(isinstance(elem, int) for elem in elements):
-            return super()._concat_bits(elements, element_width)
-
-        # Convert ints to Z3 BitVecs and concatenate using z3.Concat
-        z3_elements = []
-        for element in elements:
-            if isinstance(element, int):
-                z3_elements.append(z3.BitVecVal(element, element_width))
-            else:
-                # Ensure element has correct bit width
-                if element.sort().size() != element_width:
-                    if element.sort().size() > element_width:
-                        element = z3.Extract(element_width - 1, 0, element)
-                    else:
-                        element = z3.ZeroExt(
-                            element_width - element.sort().size(), element
-                        )
-                z3_elements.append(element)
-
         # Z3 Concat concatenates with the first argument as high bits
         # But our elements list has element 0 as low bits, so reverse
-        return z3.Concat(*reversed(z3_elements))
+        return z3.Concat(*reversed(elements))
 
     def _binop_Iop_Shl64(self, expr, left, right):
         """Z3 implementation of 64-bit left shift."""
-        if isinstance(left, int) and isinstance(right, int):
-            return super()._binop_Iop_Shl64(expr, left, right)
         # For Z3 expressions, ensure both operands have same bit width
-        if isinstance(right, int):
-            right = z3.BitVecVal(right, 64)
-        elif right.sort().size() < 64:
+        if right.sort().size() < 64:
             right = z3.ZeroExt(64 - right.sort().size(), right)
         return left << right
 
     def _binop_Iop_Shr64(self, expr, left, right):
         """Z3 implementation of 64-bit logical right shift."""
-        if isinstance(left, int) and isinstance(right, int):
-            return super()._binop_Iop_Shr64(expr, left, right)
         # For Z3 expressions, ensure both operands have same bit width
-        if isinstance(right, int):
-            right = z3.BitVecVal(right, 64)
-        elif right.sort().size() < 64:
+        if right.sort().size() < 64:
             right = z3.ZeroExt(64 - right.sort().size(), right)
         return z3.LShR(left, right)
 
     def _binop_Iop_Sar64(self, expr, left, right):
         """Z3 implementation of 64-bit arithmetic right shift."""
-        if isinstance(left, int) and isinstance(right, int):
-            return super()._binop_Iop_Sar64(expr, left, right)
         # For Z3 expressions, ensure both operands have same bit width
-        if isinstance(right, int):
-            right = z3.BitVecVal(right, 64)
-        elif right.sort().size() < 64:
+        if right.sort().size() < 64:
             right = z3.ZeroExt(64 - right.sort().size(), right)
         return left >> right
 
     def _binop_Iop_Shl32(self, expr, left, right):
         """Z3 implementation of 32-bit left shift."""
-        if isinstance(left, int) and isinstance(right, int):
-            return super()._binop_Iop_Shl32(expr, left, right)
         # For Z3 expressions, ensure both operands have same bit width
-        if isinstance(right, int):
-            right = z3.BitVecVal(right, 32)
-        elif right.sort().size() < 32:
+        if right.sort().size() < 32:
             right = z3.ZeroExt(32 - right.sort().size(), right)
         elif right.sort().size() > 32:
             right = z3.Extract(31, 0, right)
@@ -119,12 +79,8 @@ class StateZ3(interpreter.State):
 
     def _binop_Iop_Shr32(self, expr, left, right):
         """Z3 implementation of 32-bit logical right shift."""
-        if isinstance(left, int) and isinstance(right, int):
-            return super()._binop_Iop_Shr32(expr, left, right)
         # For Z3 expressions, ensure both operands have same bit width
-        if isinstance(right, int):
-            right = z3.BitVecVal(right, 32)
-        elif right.sort().size() < 32:
+        if right.sort().size() < 32:
             right = z3.ZeroExt(32 - right.sort().size(), right)
         elif right.sort().size() > 32:
             right = z3.Extract(31, 0, right)
@@ -132,12 +88,8 @@ class StateZ3(interpreter.State):
 
     def _binop_Iop_Sar32(self, expr, left, right):
         """Z3 implementation of 32-bit arithmetic right shift."""
-        if isinstance(left, int) and isinstance(right, int):
-            return super()._binop_Iop_Sar32(expr, left, right)
         # For Z3 expressions, ensure both operands have same bit width
-        if isinstance(right, int):
-            right = z3.BitVecVal(right, 32)
-        elif right.sort().size() < 32:
+        if right.sort().size() < 32:
             right = z3.ZeroExt(32 - right.sort().size(), right)
         elif right.sort().size() > 32:
             right = z3.Extract(31, 0, right)
@@ -149,15 +101,6 @@ class StateZ3(interpreter.State):
 
     def _splice_register_value(self, current_value, new_value, bitwidth):
         """Z3-compatible register value splicing."""
-        if isinstance(current_value, int) and isinstance(new_value, int):
-            return super()._splice_register_value(current_value, new_value, bitwidth)
-
-        # Convert integers to Z3 BitVecs if needed
-        if isinstance(current_value, int):
-            current_value = z3.BitVecVal(current_value, 64)  # Default to 64-bit
-        if isinstance(new_value, int):
-            new_value = z3.BitVecVal(new_value, 64)  # Default to 64-bit
-
         # For Z3 expressions, handle bit width differences
         current_bits = current_value.sort().size()
         new_bits = new_value.sort().size()
