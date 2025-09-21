@@ -1,3 +1,4 @@
+import operator
 import struct
 
 import pyvex
@@ -59,6 +60,32 @@ class State:
             The extracted element as an integer
         """
         return self._mask(packed_value >> (index * width), width)
+
+    def _packed_arithmetic(self, left, right, width, count, operation):
+        """Generic helper for packed arithmetic operations.
+
+        Args:
+            left: Left operand packed value
+            right: Right operand packed value
+            width: Bit width of each element (8, 16, 32, or 64)
+            count: Number of elements (16, 8, 4, or 2)
+            operation: Function that takes (left_elem, right_elem) and returns result
+
+        Returns:
+            Packed result value
+        """
+        result = 0
+        for i in range(count):
+            left_elem = self._extract_packed_element(left, width, i)
+            right_elem = self._extract_packed_element(right, width, i)
+
+            # Apply operation with overflow/underflow wrapping
+            result_elem = self._mask(operation(left_elem, right_elem), width)
+
+            # Place result in correct position
+            result |= result_elem << (i * width)
+
+        return result
 
     def interpret(self, irsb):
         for stmt in irsb.statements:
@@ -600,131 +627,35 @@ class State:
     # Packed integer arithmetic operations
     def _binop_Iop_Add32x4(self, expr, left, right):
         # Packed add 4×32-bit integers: [a3,a2,a1,a0] + [b3,b2,b1,b0]
-        result = 0
-        for i in range(4):
-            # Extract 32-bit element from each operand using helper method
-            left_elem = self._extract_packed_element(left, 32, i)
-            right_elem = self._extract_packed_element(right, 32, i)
-
-            # Add with 32-bit overflow wrapping
-            sum_elem = self._mask(left_elem + right_elem, 32)
-
-            # Place result in correct position
-            result |= sum_elem << (i * 32)
-
-        return result
+        return self._packed_arithmetic(left, right, 32, 4, operator.add)
 
     def _binop_Iop_Sub32x4(self, expr, left, right):
         # Packed subtract 4×32-bit integers: [a3,a2,a1,a0] - [b3,b2,b1,b0]
-        result = 0
-        for i in range(4):
-            # Extract 32-bit element from each operand using helper method
-            left_elem = self._extract_packed_element(left, 32, i)
-            right_elem = self._extract_packed_element(right, 32, i)
-
-            # Subtract with 32-bit underflow wrapping
-            diff_elem = self._mask(left_elem - right_elem, 32)
-
-            # Place result in correct position
-            result |= diff_elem << (i * 32)
-
-        return result
+        return self._packed_arithmetic(left, right, 32, 4, operator.sub)
 
     def _binop_Iop_Add64x2(self, expr, left, right):
         # Packed add 2×64-bit integers: [a1,a0] + [b1,b0] = [a1+b1,a0+b0]
-        result = 0
-        for i in range(2):
-            # Extract 64-bit element from each operand using helper method
-            left_elem = self._extract_packed_element(left, 64, i)
-            right_elem = self._extract_packed_element(right, 64, i)
-
-            # Add with 64-bit overflow wrapping
-            sum_elem = self._mask(left_elem + right_elem, 64)
-
-            # Place result in correct position
-            result |= sum_elem << (i * 64)
-
-        return result
+        return self._packed_arithmetic(left, right, 64, 2, operator.add)
 
     def _binop_Iop_Sub64x2(self, expr, left, right):
         # Packed subtract 2×64-bit integers: [a1,a0] - [b1,b0] = [a1-b1,a0-b0]
-        result = 0
-        for i in range(2):
-            # Extract 64-bit element from each operand using helper method
-            left_elem = self._extract_packed_element(left, 64, i)
-            right_elem = self._extract_packed_element(right, 64, i)
-
-            # Subtract with 64-bit underflow wrapping
-            diff_elem = self._mask(left_elem - right_elem, 64)
-
-            # Place result in correct position
-            result |= diff_elem << (i * 64)
-
-        return result
+        return self._packed_arithmetic(left, right, 64, 2, operator.sub)
 
     def _binop_Iop_Add16x8(self, expr, left, right):
         # Packed add 8×16-bit integers
-        result = 0
-        for i in range(8):
-            # Extract 16-bit element from each operand using helper method
-            left_elem = self._extract_packed_element(left, 16, i)
-            right_elem = self._extract_packed_element(right, 16, i)
-
-            # Add with 16-bit overflow wrapping
-            sum_elem = self._mask(left_elem + right_elem, 16)
-
-            # Place result in correct position
-            result |= sum_elem << (i * 16)
-
-        return result
+        return self._packed_arithmetic(left, right, 16, 8, operator.add)
 
     def _binop_Iop_Sub16x8(self, expr, left, right):
         # Packed subtract 8×16-bit integers
-        result = 0
-        for i in range(8):
-            # Extract 16-bit element from each operand using helper method
-            left_elem = self._extract_packed_element(left, 16, i)
-            right_elem = self._extract_packed_element(right, 16, i)
-
-            # Subtract with 16-bit underflow wrapping
-            diff_elem = self._mask(left_elem - right_elem, 16)
-
-            # Place result in correct position
-            result |= diff_elem << (i * 16)
-
-        return result
+        return self._packed_arithmetic(left, right, 16, 8, operator.sub)
 
     def _binop_Iop_Add8x16(self, expr, left, right):
         # Packed add 16×8-bit integers
-        result = 0
-        for i in range(16):
-            # Extract 8-bit element from each operand using helper method
-            left_elem = self._extract_packed_element(left, 8, i)
-            right_elem = self._extract_packed_element(right, 8, i)
-
-            # Add with 8-bit overflow wrapping
-            sum_elem = self._mask(left_elem + right_elem, 8)
-
-            # Place result in correct position
-            result |= sum_elem << (i * 8)
-
-        return result
+        return self._packed_arithmetic(left, right, 8, 16, operator.add)
 
     def _binop_Iop_Sub8x16(self, expr, left, right):
         # Packed subtract 16×8-bit integers
-        result = 0
-        for i in range(16):
-            # Extract 8-bit element from each operand using helper method
-            left_elem = self._extract_packed_element(left, 8, i)
-            right_elem = self._extract_packed_element(right, 8, i)
-
-            # Subtract with 8-bit underflow wrapping
-            diff_elem = self._mask(left_elem - right_elem, 8)
-
-            # Place result in correct position
-            result |= diff_elem << (i * 8)
-
-        return result
+        return self._packed_arithmetic(left, right, 8, 16, operator.sub)
 
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
