@@ -9,7 +9,8 @@ class StateZ3(interpreter.State):
             return z3.BitVecVal(value, bitwidth)
         if value.sort().size() == bitwidth:
             return value
-        return value & ((1 << bitwidth) - 1)
+        # For Z3 expressions, use Extract to get the proper bit width
+        return z3.Extract(bitwidth - 1, 0, value)
 
     def _binop_Iop_MullS8(self, expr, left, right):
         """Z3 implementation of signed 8-bit multiply -> 16-bit result."""
@@ -21,6 +22,20 @@ class StateZ3(interpreter.State):
         left_16 = z3.SignExt(8, left)  # 8-bit -> 16-bit signed extension
         right_16 = z3.SignExt(8, right)  # 8-bit -> 16-bit signed extension
         return left_16 * right_16
+
+    def _zero_extend(self, value, from_bitwidth, to_bitwidth):
+        """Z3 implementation of zero extension."""
+        if isinstance(value, int):
+            return super()._zero_extend(value, from_bitwidth, to_bitwidth)
+        # Zero-extend using Z3
+        extension_bits = to_bitwidth - from_bitwidth
+        if extension_bits <= 0:
+            return self._mask(value, to_bitwidth)
+        return z3.ZeroExt(extension_bits, value)
+
+    def _check_expression_result_type(self, expr, res):
+        # check that z3 bit vector sort is of the same size as the vex type says
+        assert res.sort().size() == expr.result_size(self._current_irsb.tyenv)
 
     def _splice_register_value(self, current_value, new_value, bitwidth):
         """Z3-compatible register value splicing."""
@@ -74,3 +89,7 @@ class StateZ3(interpreter.State):
         # Use Z3-compatible splicing
         new_value = self._splice_register_value(current_value, value, bitwidth)
         self.set_register(reg_name, new_value)
+
+    def _eval_expr_Const(self, expr, arch):
+        width = expr.result_size(self._current_irsb.tyenv)
+        return z3.BitVecVal(expr.con.value, width)

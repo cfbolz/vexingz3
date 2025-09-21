@@ -129,6 +129,7 @@ class State:
         return self._from_signed(result_signed, width)
 
     def interpret(self, irsb):
+        self._current_irsb = irsb
         for stmt in irsb.statements:
             getattr(self, f"_stmt_{stmt.__class__.__name__}", self._default_stmt)(
                 stmt, irsb
@@ -180,9 +181,14 @@ class State:
         pass
 
     def _eval_expression(self, expr, arch):
-        return getattr(
+        res = getattr(
             self, f"_eval_expr_{expr.__class__.__name__}", self._default_eval_expr
         )(expr, arch)
+        self._check_expression_result_type(expr, res)
+        return res
+
+    def _check_expression_result_type(self, expr, res):
+        pass  # nothing, it's for overwriting in subclasses
 
     def _default_eval_expr(self, expr, arch):
         raise NotImplementedError(
@@ -268,6 +274,10 @@ class State:
         """Sign-extend value from one bit width to another."""
         signed_value = self._to_signed(value, from_bitwidth)
         return self._from_signed(signed_value, to_bitwidth)
+
+    def _zero_extend(self, value, from_bitwidth, to_bitwidth):
+        """Zero-extend value from one bit width to another."""
+        return self._mask(value, from_bitwidth)
 
     def _c_style_divmod(self, dividend, divisor):
         """C-style division that truncates towards zero (not Python floor division)."""
@@ -822,7 +832,7 @@ class State:
         return self._mask(arg, 16)  # zero-extend to 64 bits (already done by mask)
 
     def _unop_Iop_8Uto64(self, expr, arg):
-        return self._mask(arg, 8)  # zero-extend to 64 bits (already done by mask)
+        return self._zero_extend(arg, 8, 64)
 
     def _unop_Iop_64HIto32(self, expr, arg):
         return self._mask(arg >> 32, 32)  # Extract high 32 bits
