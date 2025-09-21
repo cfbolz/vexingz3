@@ -87,6 +87,49 @@ class State:
 
         return result
 
+    def _packed_shift(self, value, shift_amount, width, count, shift_op):
+        """Generic helper for packed shift operations.
+
+        Args:
+            value: Packed value to shift
+            shift_amount: Scalar shift amount (applies to all elements)
+            width: Bit width of each element (8, 16, 32, or 64)
+            count: Number of elements (32, 16, 8, 4, or 2)
+            shift_op: Shift operation function (<<, >>, or arithmetic right shift)
+
+        Returns:
+            Packed result value
+        """
+        result = 0
+        # Mask shift amount to valid range for the element width
+        shift_amount = shift_amount & (width - 1)
+
+        for i in range(count):
+            element = self._extract_packed_element(value, width, i)
+
+            # Apply shift operation with proper masking
+            shifted_elem = self._mask(shift_op(element, shift_amount), width)
+
+            # Place result in correct position
+            result |= shifted_elem << (i * width)
+
+        return result
+
+    def _arithmetic_right_shift(self, value, shift_amount, width):
+        """Generic helper for arithmetic right shift that preserves sign bit.
+
+        Args:
+            value: Unsigned value to shift
+            shift_amount: Number of bits to shift right
+            width: Bit width of the value (8, 16, 32, or 64)
+
+        Returns:
+            Unsigned representation of the arithmetically shifted value
+        """
+        value_signed = self._to_signed(value, width)
+        result_signed = value_signed >> shift_amount
+        return self._from_signed(result_signed, width)
+
     def interpret(self, irsb):
         for stmt in irsb.statements:
             if isinstance(stmt, pyvex.stmt.IMark):
@@ -355,10 +398,7 @@ class State:
         assert (
             0 <= right <= 63
         ), f"Shift count {right} out of range [0, 63] for 64-bit shift"
-        # Convert to signed, perform arithmetic shift, convert back
-        left_signed = self._to_signed(left, 64)
-        result = left_signed >> right
-        return self._from_signed(result, 64)
+        return self._arithmetic_right_shift(left, right, 64)
 
     def _binop_Iop_Shl8(self, expr, left, right):
         return self._mask(left << right, 8)
@@ -379,19 +419,13 @@ class State:
         return self._mask(left >> right, 32)
 
     def _binop_Iop_Sar8(self, expr, left, right):
-        left_signed = self._to_signed(left, 8)
-        result = left_signed >> right
-        return self._from_signed(result, 8)
+        return self._arithmetic_right_shift(left, right, 8)
 
     def _binop_Iop_Sar16(self, expr, left, right):
-        left_signed = self._to_signed(left, 16)
-        result = left_signed >> right
-        return self._from_signed(result, 16)
+        return self._arithmetic_right_shift(left, right, 16)
 
     def _binop_Iop_Sar32(self, expr, left, right):
-        left_signed = self._to_signed(left, 32)
-        result = left_signed >> right
-        return self._from_signed(result, 32)
+        return self._arithmetic_right_shift(left, right, 32)
 
     def _binop_Iop_CmpNE8(self, expr, left, right):
         # Compare not equal: returns 1 if different, 0 if same
@@ -688,6 +722,60 @@ class State:
     def _binop_Iop_Sub32x8(self, expr, left, right):
         # Packed subtract 8×32-bit integers (AVX2): 256-bit vector operations
         return self._packed_arithmetic(left, right, 32, 8, operator.sub)
+
+    # Packed multiplication operations (truncated results)
+    def _binop_Iop_Mul16x8(self, expr, left, right):
+        # Packed multiply 8×16-bit integers (PMULLW): truncated to 16-bit results
+        return self._packed_arithmetic(left, right, 16, 8, operator.mul)
+
+    def _binop_Iop_Mul32x4(self, expr, left, right):
+        # Packed multiply 4×32-bit integers (PMULLD): truncated to 32-bit results
+        return self._packed_arithmetic(left, right, 32, 4, operator.mul)
+
+    def _binop_Iop_Mul16x16(self, expr, left, right):
+        # Packed multiply 16×16-bit integers (VPMULLW ymm): 256-bit AVX2
+        return self._packed_arithmetic(left, right, 16, 16, operator.mul)
+
+    def _binop_Iop_Mul32x8(self, expr, left, right):
+        # Packed multiply 8×32-bit integers (VPMULLD ymm): 256-bit AVX2
+        return self._packed_arithmetic(left, right, 32, 8, operator.mul)
+
+    # Packed shift operations
+    def _binop_Iop_Shl16x8(self, expr, left, right):
+        # Packed left shift 8×16-bit integers (PSLLW)
+        return self._packed_shift(left, right, 16, 8, operator.lshift)
+
+    def _binop_Iop_Shl32x4(self, expr, left, right):
+        # Packed left shift 4×32-bit integers (PSLLD)
+        return self._packed_shift(left, right, 32, 4, operator.lshift)
+
+    def _binop_Iop_Shl64x2(self, expr, left, right):
+        # Packed left shift 2×64-bit integers (PSLLQ)
+        return self._packed_shift(left, right, 64, 2, operator.lshift)
+
+    def _binop_Iop_Shr16x8(self, expr, left, right):
+        # Packed logical right shift 8×16-bit integers (PSRLW)
+        return self._packed_shift(left, right, 16, 8, operator.rshift)
+
+    def _binop_Iop_Shr32x4(self, expr, left, right):
+        # Packed logical right shift 4×32-bit integers (PSRLD)
+        return self._packed_shift(left, right, 32, 4, operator.rshift)
+
+    def _binop_Iop_Shr64x2(self, expr, left, right):
+        # Packed logical right shift 2×64-bit integers (PSRLQ)
+        return self._packed_shift(left, right, 64, 2, operator.rshift)
+
+    def _binop_Iop_Sar16x8(self, expr, left, right):
+        # Packed arithmetic right shift 8×16-bit integers (PSRAW)
+        return self._packed_shift(
+            left, right, 16, 8, lambda v, s: self._arithmetic_right_shift(v, s, 16)
+        )
+
+    def _binop_Iop_Sar32x4(self, expr, left, right):
+        # Packed arithmetic right shift 4×32-bit integers (PSRAD)
+        return self._packed_shift(
+            left, right, 32, 4, lambda v, s: self._arithmetic_right_shift(v, s, 32)
+        )
 
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")

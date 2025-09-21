@@ -1187,3 +1187,158 @@ def test_vpsubq_64x4():
     # Demonstrate unpack functionality by verifying the result element by element
     result_elements = unpack_integers(output_state.ymm0, 64, 4)
     assert result_elements == [99, 198, 297, 396]
+
+
+def test_pmullw_16x8():
+    # pmullw xmm0, xmm1 - packed multiply 8×16-bit integers (truncated)
+    # Simple test: [2, 3, 4, 5, 6, 7, 8, 9] * [10, 10, 10, 10, 10, 10, 10, 10]
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    val1 = pack_integers([2, 3, 4, 5, 6, 7, 8, 9], 16)
+    val2 = pack_integers([10, 10, 10, 10, 10, 10, 10, 10], 16)
+    expected = pack_integers([20, 30, 40, 50, 60, 70, 80, 90], 16)
+
+    result = state._binop_Iop_Mul16x8(None, val1, val2)
+    assert result == expected
+
+
+def test_pmulld_32x4():
+    # pmulld xmm0, xmm1 - packed multiply 4×32-bit integers (truncated)
+    # Simple test: [100, 200, 300, 400] * [2, 3, 4, 5] = [200, 600, 1200, 2000]
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    val1 = pack_integers([100, 200, 300, 400], 32)
+    val2 = pack_integers([2, 3, 4, 5], 32)
+    expected = pack_integers([200, 600, 1200, 2000], 32)
+
+    result = state._binop_Iop_Mul32x4(None, val1, val2)
+    assert result == expected
+
+
+def test_vpmullw_16x16():
+    # vpmullw ymm0, ymm1, ymm2 - AVX2 packed multiply 16×16-bit integers
+    # Test with alternating pattern
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    input1 = [i + 1 for i in range(16)]  # [1, 2, 3, ..., 16]
+    input2 = [2] * 16  # [2, 2, 2, ..., 2]
+    expected_vals = [a * b for a, b in zip(input1, input2)]  # [2, 4, 6, ..., 32]
+
+    val1 = pack_integers(input1, 16)
+    val2 = pack_integers(input2, 16)
+    expected = pack_integers(expected_vals, 16)
+
+    result = state._binop_Iop_Mul16x16(None, val1, val2)
+    assert result == expected
+
+
+def test_vpmulld_32x8():
+    # vpmulld ymm0, ymm1, ymm2 - AVX2 packed multiply 8×32-bit integers
+    # Test overflow behavior (32-bit truncation)
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    val1 = pack_integers([1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000], 32)
+    val2 = pack_integers([1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000], 32)
+    # Results: [1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000]
+    expected = pack_integers(
+        [1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000], 32
+    )
+
+    result = state._binop_Iop_Mul32x8(None, val1, val2)
+    assert result == expected
+
+
+def test_psllw_16x8():
+    # psllw xmm0, imm8 - packed left shift 8×16-bit integers
+    # Test: [1, 2, 4, 8, 16, 32, 64, 128] << 2 = [4, 8, 16, 32, 64, 128, 256, 512]
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    val1 = pack_integers([1, 2, 4, 8, 16, 32, 64, 128], 16)
+    shift_amount = 2
+    expected = pack_integers([4, 8, 16, 32, 64, 128, 256, 512], 16)
+
+    result = state._binop_Iop_Shl16x8(None, val1, shift_amount)
+    assert result == expected
+
+
+def test_pslld_32x4():
+    # pslld xmm0, imm8 - packed left shift 4×32-bit integers
+    # Test: [1, 10, 100, 1000] << 4 = [16, 160, 1600, 16000]
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    val1 = pack_integers([1, 10, 100, 1000], 32)
+    expected = pack_integers([16, 160, 1600, 16000], 32)
+
+    result = state._binop_Iop_Shl32x4(None, val1, 4)
+    assert result == expected
+
+
+def test_psrlw_16x8():
+    # psrlw xmm0, imm8 - packed logical right shift 8×16-bit integers
+    # Test: [1024, 512, 256, 128, 64, 32, 16, 8] >> 2 = [256, 128, 64, 32, 16, 8, 4, 2]
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    val1 = pack_integers([1024, 512, 256, 128, 64, 32, 16, 8], 16)
+    expected = pack_integers([256, 128, 64, 32, 16, 8, 4, 2], 16)
+
+    result = state._binop_Iop_Shr16x8(None, val1, 2)
+    assert result == expected
+
+
+def test_psraw_16x8():
+    # psraw xmm0, imm8 - packed arithmetic right shift 8×16-bit integers
+    # Test with negative numbers to verify sign extension
+    # [32767, -32768, 1024, -1024, 256, -256, 64, -64] >> 2
+    # Expected: [8191, -8192, 256, -256, 64, -64, 16, -16]
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    val1 = pack_integers(
+        [32767, 65536 - 32768, 1024, 65536 - 1024, 256, 65536 - 256, 64, 65536 - 64], 16
+    )
+    expected = pack_integers(
+        [8191, 65536 - 8192, 256, 65536 - 256, 64, 65536 - 64, 16, 65536 - 16], 16
+    )
+
+    result = state._binop_Iop_Sar16x8(None, val1, 2)
+    assert result == expected
+
+
+def test_psrad_32x4():
+    # psrad xmm0, imm8 - packed arithmetic right shift 4×32-bit integers
+    # Test with negative numbers to verify sign extension
+    # [1000000, -1000000, 100000, -100000] >> 4
+    # Expected: [62500, -62500, 6250, -6250]
+    import archinfo
+
+    from vexingz3.interpreter import State
+
+    state = State(archinfo.ArchAMD64())
+    val1 = pack_integers([1000000, (1 << 32) - 1000000, 100000, (1 << 32) - 100000], 32)
+    expected = pack_integers([62500, (1 << 32) - 62500, 6250, (1 << 32) - 6250], 32)
+
+    result = state._binop_Iop_Sar32x4(None, val1, 4)
+    assert result == expected
