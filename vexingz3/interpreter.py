@@ -161,8 +161,7 @@ class State:
         data_type = stmt.data.result_type(irsb.tyenv)
         bitwidth = TYPE_TO_BITWIDTH[data_type]
         current_value = self.get_register(reg_name)
-        mask = (1 << bitwidth) - 1
-        new_value = (current_value & ~mask) | (value & mask)
+        new_value = self._splice_register_value(current_value, value, bitwidth)
         self.set_register(reg_name, new_value)
 
     def _stmt_Store(self, stmt, irsb):
@@ -278,6 +277,11 @@ class State:
     def _zero_extend(self, value, from_bitwidth, to_bitwidth):
         """Zero-extend value from one bit width to another."""
         return self._mask(value, from_bitwidth)
+
+    def _splice_register_value(self, current_value, new_value, bitwidth):
+        """Splice new value into register based on bit width."""
+        mask = (1 << bitwidth) - 1
+        return (current_value & ~mask) | (new_value & mask)
 
     def _c_style_divmod(self, dividend, divisor):
         """C-style division that truncates towards zero (not Python floor division)."""

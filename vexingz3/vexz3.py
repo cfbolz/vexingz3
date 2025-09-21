@@ -69,23 +69,6 @@ class StateZ3(interpreter.State):
             inv_mask = ~mask
             return (current_value & inv_mask) | (new_value_extended & mask)
 
-    def _stmt_Put(self, stmt, irsb):
-        """Z3-compatible PUT statement handling."""
-        reg_offset = stmt.offset
-        reg_name = irsb.arch.register_names.get(reg_offset)
-        value = self._eval_expression(stmt.data, irsb.arch)
-        if reg_name is None:
-            raise NotImplementedError(f"Unknown register offset {reg_offset}")
-
-        # Splice value into register based on data type
-        data_type = stmt.data.result_type(irsb.tyenv)
-        bitwidth = interpreter.TYPE_TO_BITWIDTH[data_type]
-        current_value = self.get_register(reg_name)
-
-        # Use Z3-compatible splicing
-        new_value = self._splice_register_value(current_value, value, bitwidth)
-        self.set_register(reg_name, new_value)
-
     def _eval_expr_Const(self, expr, arch):
         width = expr.result_size(self._current_irsb.tyenv)
         return z3.BitVecVal(expr.con.value, width)
