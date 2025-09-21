@@ -5,8 +5,6 @@ from vexingz3 import interpreter
 
 class StateZ3(interpreter.State):
     def _mask(self, value, bitwidth):
-        if isinstance(value, int):
-            return z3.BitVecVal(value, bitwidth)
         if value.sort().size() == bitwidth:
             return value
         # For Z3 expressions, use Extract to get the proper bit width
@@ -25,8 +23,6 @@ class StateZ3(interpreter.State):
 
     def _zero_extend(self, value, from_bitwidth, to_bitwidth):
         """Z3 implementation of zero extension."""
-        if isinstance(value, int):
-            return super()._zero_extend(value, from_bitwidth, to_bitwidth)
         # Zero-extend using Z3
         extension_bits = to_bitwidth - from_bitwidth
         if extension_bits <= 0:

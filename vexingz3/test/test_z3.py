@@ -1,5 +1,4 @@
 import archinfo
-import pytest
 import pyvex
 import z3
 
@@ -84,15 +83,14 @@ def test_mulls8():
 def test_imul8_bl_concrete():
     """Integration test for IMUL BL with concrete values"""
     # Test case: AL = 0xFF (-1), BL = 0x02 (2) -> AX should be 0xFFFE (-2)
-    output_state = run("f6eb", rax=0xFF, rbx=0x02)  # imul bl
+    output_state = run(
+        "f6eb", rax=z3.BitVecVal(0xFF, 64), rbx=z3.BitVecVal(0x02, 64)
+    )  # imul bl
     expected_rax = 0xFFFE  # -1 * 2 = -2 in 16-bit two's complement
 
     assert_z3_equivalent(output_state[0]["rax"], expected_rax)
 
 
-@pytest.mark.xfail(
-    reason="WIP: Complex symbolic expression equivalence needs refinement"
-)
 def test_imul8_bl_symbolic():
     """Integration test for IMUL BL with symbolic values - simplified version"""
     rax = z3.BitVec("rax_init", 64)
@@ -100,12 +98,14 @@ def test_imul8_bl_symbolic():
 
     output_state = run("f6eb", rax=rax, rbx=rbx)  # imul bl
     result_rax = output_state[0]["rax"]
+    expected = z3.SignExt(8, z3.Extract(7, 0, rax)) * z3.SignExt(
+        8, z3.Extract(7, 0, rbx)
+    )
+    spliced = z3.Concat(z3.Extract(63, 16, rax), expected)
 
     # Test with a specific concrete example within the symbolic framework
     s = z3.Solver()
-    s.add(rax == 0xFF)  # AL = 0xFF
-    s.add(rbx == 0x02)  # BL = 0x02
-    s.add(result_rax != 0xFFFE)  # Result should be 0xFFFE
+    s.add(result_rax != spliced)  # Result should be 0xFFFE
 
     # If the solver cannot find a model, then our implementation is correct
     assert (
