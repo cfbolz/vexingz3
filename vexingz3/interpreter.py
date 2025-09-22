@@ -989,6 +989,12 @@ class State:
         # 128-bit bitwise NOT - complement all bits
         return (~arg) & ((1 << 128) - 1)
 
+    def _unop_Iop_32UtoV128(self, expr, arg):
+        return self._zero_extend(arg, 32, 128)
+
+    def _unop_Iop_64UtoV128(self, expr, arg):
+        return self._zero_extend(arg, 64, 128)
+
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")
 

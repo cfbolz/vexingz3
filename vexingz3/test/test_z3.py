@@ -363,3 +363,31 @@ def test_unop_8sto32_z3():
     result = state._unop_Iop_8Sto32(None, arg)
     expected = z3.SignExt(24, arg)  # Sign-extend 8->32 (add 24 bits)
     assert_z3_equivalent(result, expected)
+
+
+# Integration tests for SSE2 vector operations
+def test_movd_rax_xmm0():
+    """Test MOVD EAX, XMM0 - 32-bit to 128-bit vector with zero fill"""
+    rax = z3.BitVec("rax_init", 64)
+    registers, memory = run("660f6ec0", rax=rax)  # movd %eax, %xmm0
+
+    # Should take lower 32 bits of RAX and zero-extend to 128-bit vector
+    # XMM0 is mapped to the lower 128 bits of YMM0
+    eax = z3.Extract(31, 0, rax)
+    expected_ymm0 = z3.Concat(
+        z3.BitVecVal(0, 96), eax
+    )  # 96 zero bits + 32 bits from EAX
+    assert_z3_equivalent(registers["ymm0"], expected_ymm0)
+
+
+def test_movq_rax_xmm0():
+    """Test MOVQ RAX, XMM0 - 64-bit to 128-bit vector with zero fill"""
+    rax = z3.BitVec("rax_init", 64)
+    registers, memory = run("66480f6ec0", rax=rax)  # movq %rax, %xmm0
+
+    # Should take full 64 bits of RAX and zero-extend to 128-bit vector
+    # XMM0 is mapped to the lower 128 bits of YMM0
+    expected_ymm0 = z3.Concat(
+        z3.BitVecVal(0, 64), rax
+    )  # 64 zero bits + 64 bits from RAX
+    assert_z3_equivalent(registers["ymm0"], expected_ymm0)

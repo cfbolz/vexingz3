@@ -1625,3 +1625,61 @@ def test_unop_8sto32():
     # Test with zero
     result = state._unop_Iop_8Sto32(None, 0)
     assert result == 0
+
+
+# Tests for vector extension operations
+def test_unop_32utov128():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test zero extension from 32 to 128 bits
+    result = state._unop_Iop_32UtoV128(None, 0x12345678)
+    assert result == 0x12345678  # Should be zero-extended to 128 bits
+
+    # Test with maximum 32-bit value
+    result = state._unop_Iop_32UtoV128(None, 0xFFFFFFFF)
+    assert result == 0xFFFFFFFF  # Should be 0x000000000000000000000000FFFFFFFF
+
+    # Test with zero
+    result = state._unop_Iop_32UtoV128(None, 0)
+    assert result == 0
+
+
+def test_unop_64utov128():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test zero extension from 64 to 128 bits
+    result = state._unop_Iop_64UtoV128(None, 0x123456789ABCDEF0)
+    assert result == 0x123456789ABCDEF0  # Should be zero-extended to 128 bits
+
+    # Test with maximum 64-bit value
+    result = state._unop_Iop_64UtoV128(None, 0xFFFFFFFFFFFFFFFF)
+    assert result == 0xFFFFFFFFFFFFFFFF  # Should be 0x00000000000000000FFFFFFFFFFFFFFFF
+
+    # Test with zero
+    result = state._unop_Iop_64UtoV128(None, 0)
+    assert result == 0
+
+
+# Integration tests for MOVD and MOVQ instructions
+def test_movd_integration():
+    """Test MOVD EAX, XMM0 with concrete values"""
+    output_state = run("660f6ec0", rax=0x123456789ABCDEF0)  # movd %eax, %xmm0
+    check_output(
+        output_state,
+        rax=0x123456789ABCDEF0,  # RAX unchanged
+        ymm0=0x9ABCDEF0,  # Only lower 32 bits moved to YMM0, upper bits zeroed
+    )
+
+
+def test_movq_integration():
+    """Test MOVQ RAX, XMM0 with concrete values"""
+    output_state = run("66480f6ec0", rax=0x123456789ABCDEF0)  # movq %rax, %xmm0
+    check_output(
+        output_state,
+        rax=0x123456789ABCDEF0,  # RAX unchanged
+        ymm0=0x123456789ABCDEF0,  # Full 64 bits moved to YMM0, upper bits zeroed
+    )
