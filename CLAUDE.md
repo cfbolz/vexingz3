@@ -40,3 +40,11 @@ the project are to write various tools to analyze VEX code. Right now there are 
 ## Virtual Environment
 
 The project uses a symlinked virtual environment located at `../2025-09-20-angr-vibe/venv/`.
+
+## Notifications
+
+Send desktop notifications using gdbus when:
+- A task is finished (message: "finished: short description of what was done")
+- Blocked and need to ask the user a question (message: short form of the question)
+
+Command: `gdbus call --session --dest=org.freedesktop.Notifications --object-path=/org/freedesktop/Notifications --method=org.freedesktop.Notifications.Notify "" 1234 "" "MESSAGE" "Claude" '[]' '{"urgency": <1>}' 0`
