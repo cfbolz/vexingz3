@@ -157,9 +157,10 @@ class State:
         if reg_name is None:
             raise NotImplementedError(f"Unknown register offset {reg_offset}")
         # Splice value into register based on data type
+        (reg,) = [r for r in irsb.arch.register_list if r.vex_offset == stmt.offset]
         data_type = stmt.data.result_type(irsb.tyenv)
         bitwidth = TYPE_TO_BITWIDTH[data_type]
-        current_value = self.get_register(reg_name, bitwidth)
+        current_value = self.get_register(reg_name, reg.size * 8)
         new_value = self._splice_register_value(current_value, value, bitwidth)
         self.set_register(reg_name, new_value)
 

@@ -375,7 +375,7 @@ def test_movd_rax_xmm0():
     # XMM0 is mapped to the lower 128 bits of YMM0
     eax = z3.Extract(31, 0, rax)
     expected_ymm0 = z3.Concat(
-        z3.BitVecVal(0, 96), eax
+        z3.BitVecVal(0, 256 - 32), eax
     )  # 96 zero bits + 32 bits from EAX
     assert_z3_equivalent(registers["ymm0"], expected_ymm0)
 
@@ -388,6 +388,6 @@ def test_movq_rax_xmm0():
     # Should take full 64 bits of RAX and zero-extend to 128-bit vector
     # XMM0 is mapped to the lower 128 bits of YMM0
     expected_ymm0 = z3.Concat(
-        z3.BitVecVal(0, 64), rax
+        z3.BitVecVal(0, 256 - 64), rax
     )  # 64 zero bits + 64 bits from RAX
     assert_z3_equivalent(registers["ymm0"], expected_ymm0)
