@@ -25,7 +25,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 This is a VEX (Valgrind Expression) project using PyVEX. The long-term goals of
-the project are to write various tools to analyze VEX code.
+the project are to write various tools to analyze VEX code. Right now there are two tools
+
+- A VEX interpreter in `vexingz3/interpreter.py` with tests in `vexingz3/test/test_interpreter.py`.
+- A symbolic executor for that turns VEX code into Z3 SMT formulas. It re-uses
+  the interpreter infrastructure by subclassing from it, overriding only select
+  methods. It's in `vexingz3/vexz3.py`, with tests in `vexingz3/test/test_z3.py`.
 
 ## Key Dependencies
 
