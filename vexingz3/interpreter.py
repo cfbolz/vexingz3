@@ -143,6 +143,10 @@ class State:
         # Instruction mark - just continue (no-op)
         pass
 
+    def _stmt_AbiHint(self, stmt, irsb):
+        # Instruction mark - just continue (no-op)
+        pass
+
     def _stmt_WrTmp(self, stmt, irsb):
         # t0 = GET:I64(rax) or t0 = Add64(t2,t1)
         temp_name = f"t{stmt.tmp}"
