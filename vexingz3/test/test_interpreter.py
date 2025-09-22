@@ -1341,3 +1341,233 @@ def test_psrad_32x4():
 
     result = state._binop_Iop_Sar32x4(None, val1, 4)
     assert result == expected
+
+
+# Tests for new comparison operations
+def test_cmp_eq8():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test equal values
+    result = state._binop_Iop_CmpEQ8(None, 42, 42)
+    assert result == 1
+
+    # Test different values
+    result = state._binop_Iop_CmpEQ8(None, 42, 43)
+    assert result == 0
+
+    # Test 8-bit boundary values
+    result = state._binop_Iop_CmpEQ8(None, 255, 255)
+    assert result == 1
+
+    result = state._binop_Iop_CmpEQ8(None, 0, 255)
+    assert result == 0
+
+
+def test_cmp_ne32():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test different values
+    result = state._binop_Iop_CmpNE32(None, 42, 43)
+    assert result == 1
+
+    # Test equal values
+    result = state._binop_Iop_CmpNE32(None, 42, 42)
+    assert result == 0
+
+    # Test 32-bit boundary values
+    result = state._binop_Iop_CmpNE32(None, 0xFFFFFFFF, 0)
+    assert result == 1
+
+
+def test_cmp_ne64():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test different values
+    result = state._binop_Iop_CmpNE64(None, 42, 43)
+    assert result == 1
+
+    # Test equal values
+    result = state._binop_Iop_CmpNE64(None, 42, 42)
+    assert result == 0
+
+    # Test 64-bit boundary values
+    result = state._binop_Iop_CmpNE64(None, 0xFFFFFFFFFFFFFFFF, 0)
+    assert result == 1
+
+
+def test_cmp_lt32s():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test positive numbers
+    result = state._binop_Iop_CmpLT32S(None, 5, 10)
+    assert result == 1
+
+    result = state._binop_Iop_CmpLT32S(None, 10, 5)
+    assert result == 0
+
+    # Test negative numbers (signed comparison)
+    result = state._binop_Iop_CmpLT32S(None, 0xFFFFFFFF, 1)  # -1 < 1
+    assert result == 1
+
+    result = state._binop_Iop_CmpLT32S(None, 1, 0xFFFFFFFF)  # 1 > -1
+    assert result == 0
+
+    # Test equal values
+    result = state._binop_Iop_CmpLT32S(None, 5, 5)
+    assert result == 0
+
+
+def test_cmp_lt32u():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test unsigned comparison
+    result = state._binop_Iop_CmpLT32U(None, 5, 10)
+    assert result == 1
+
+    result = state._binop_Iop_CmpLT32U(None, 10, 5)
+    assert result == 0
+
+    # Test with large numbers (unsigned comparison)
+    result = state._binop_Iop_CmpLT32U(None, 1, 0xFFFFFFFF)  # 1 < max_uint32
+    assert result == 1
+
+    result = state._binop_Iop_CmpLT32U(None, 0xFFFFFFFF, 1)  # max_uint32 > 1
+    assert result == 0
+
+    # Test equal values
+    result = state._binop_Iop_CmpLT32U(None, 5, 5)
+    assert result == 0
+
+
+def test_cmp_lt64u():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test unsigned comparison
+    result = state._binop_Iop_CmpLT64U(None, 5, 10)
+    assert result == 1
+
+    result = state._binop_Iop_CmpLT64U(None, 10, 5)
+    assert result == 0
+
+    # Test with large numbers (unsigned comparison)
+    result = state._binop_Iop_CmpLT64U(None, 1, 0xFFFFFFFFFFFFFFFF)  # 1 < max_uint64
+    assert result == 1
+
+    result = state._binop_Iop_CmpLT64U(None, 0xFFFFFFFFFFFFFFFF, 1)  # max_uint64 > 1
+    assert result == 0
+
+    # Test equal values
+    result = state._binop_Iop_CmpLT64U(None, 5, 5)
+    assert result == 0
+
+
+def test_cmp_le32s():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test less than
+    result = state._binop_Iop_CmpLE32S(None, 5, 10)
+    assert result == 1
+
+    # Test greater than
+    result = state._binop_Iop_CmpLE32S(None, 10, 5)
+    assert result == 0
+
+    # Test equal (should be true for LE)
+    result = state._binop_Iop_CmpLE32S(None, 5, 5)
+    assert result == 1
+
+    # Test negative numbers (signed comparison)
+    result = state._binop_Iop_CmpLE32S(None, 0xFFFFFFFF, 1)  # -1 <= 1
+    assert result == 1
+
+    result = state._binop_Iop_CmpLE32S(None, 1, 0xFFFFFFFF)  # 1 > -1
+    assert result == 0
+
+
+def test_cmp_le32u():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test less than
+    result = state._binop_Iop_CmpLE32U(None, 5, 10)
+    assert result == 1
+
+    # Test greater than
+    result = state._binop_Iop_CmpLE32U(None, 10, 5)
+    assert result == 0
+
+    # Test equal (should be true for LE)
+    result = state._binop_Iop_CmpLE32U(None, 5, 5)
+    assert result == 1
+
+    # Test with large numbers (unsigned comparison)
+    result = state._binop_Iop_CmpLE32U(None, 1, 0xFFFFFFFF)  # 1 <= max_uint32
+    assert result == 1
+
+    result = state._binop_Iop_CmpLE32U(None, 0xFFFFFFFF, 1)  # max_uint32 > 1
+    assert result == 0
+
+
+def test_cmp_le64s():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test less than
+    result = state._binop_Iop_CmpLE64S(None, 5, 10)
+    assert result == 1
+
+    # Test greater than
+    result = state._binop_Iop_CmpLE64S(None, 10, 5)
+    assert result == 0
+
+    # Test equal (should be true for LE)
+    result = state._binop_Iop_CmpLE64S(None, 5, 5)
+    assert result == 1
+
+    # Test negative numbers (signed comparison)
+    result = state._binop_Iop_CmpLE64S(None, 0xFFFFFFFFFFFFFFFF, 1)  # -1 <= 1
+    assert result == 1
+
+    result = state._binop_Iop_CmpLE64S(None, 1, 0xFFFFFFFFFFFFFFFF)  # 1 > -1
+    assert result == 0
+
+
+def test_cmp_le64u():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test less than
+    result = state._binop_Iop_CmpLE64U(None, 5, 10)
+    assert result == 1
+
+    # Test greater than
+    result = state._binop_Iop_CmpLE64U(None, 10, 5)
+    assert result == 0
+
+    # Test equal (should be true for LE)
+    result = state._binop_Iop_CmpLE64U(None, 5, 5)
+    assert result == 1
+
+    # Test with large numbers (unsigned comparison)
+    result = state._binop_Iop_CmpLE64U(None, 1, 0xFFFFFFFFFFFFFFFF)  # 1 <= max_uint64
+    assert result == 1
+
+    result = state._binop_Iop_CmpLE64U(None, 0xFFFFFFFFFFFFFFFF, 1)  # max_uint64 > 1
+    assert result == 0

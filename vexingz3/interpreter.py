@@ -507,6 +507,52 @@ class State:
         # Compare equal: returns 1 if same, 0 if different
         return self._select(left == right, self.TRUE, self.FALSE)
 
+    def _binop_Iop_CmpEQ8(self, expr, left, right):
+        # Compare equal: returns 1 if same, 0 if different
+        return self._select(left == right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpNE32(self, expr, left, right):
+        # Compare not equal: returns 1 if different, 0 if same
+        return self._select(left != right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpNE64(self, expr, left, right):
+        # Compare not equal: returns 1 if different, 0 if same
+        return self._select(left != right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLT32S(self, expr, left, right):
+        # Signed 32-bit less-than comparison
+        left_signed = self._to_signed(left, 32)
+        right_signed = self._to_signed(right, 32)
+        return self._select(left_signed < right_signed, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLT32U(self, expr, left, right):
+        # Unsigned 32-bit less-than comparison
+        return self._select(left < right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLT64U(self, expr, left, right):
+        # Unsigned 64-bit less-than comparison
+        return self._select(left < right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLE32S(self, expr, left, right):
+        # Signed 32-bit less-than-or-equal comparison
+        left_signed = self._to_signed(left, 32)
+        right_signed = self._to_signed(right, 32)
+        return self._select(left_signed <= right_signed, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLE32U(self, expr, left, right):
+        # Unsigned 32-bit less-than-or-equal comparison
+        return self._select(left <= right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLE64S(self, expr, left, right):
+        # Signed 64-bit less-than-or-equal comparison
+        left_signed = self._to_signed(left, 64)
+        right_signed = self._to_signed(right, 64)
+        return self._select(left_signed <= right_signed, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLE64U(self, expr, left, right):
+        # Unsigned 64-bit less-than-or-equal comparison
+        return self._select(left <= right, self.TRUE, self.FALSE)
+
     def _binop_Iop_64HLto128(self, expr, left, right):
         # Combine high:low 64-bit values into 128-bit value
         high = self._mask(left, 64)

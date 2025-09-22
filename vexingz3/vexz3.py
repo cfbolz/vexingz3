@@ -136,6 +136,37 @@ class StateZ3(interpreter.State):
         # Use Z3's signed comparison directly instead of _to_signed
         return self._select(left < right, self.TRUE, self.FALSE)
 
+    def _binop_Iop_CmpLT32S(self, expr, left, right):
+        """Z3 implementation of signed 32-bit less-than comparison."""
+        # Use Z3's signed comparison directly instead of _to_signed
+        return self._select(left < right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLE32S(self, expr, left, right):
+        """Z3 implementation of signed 32-bit less-than-or-equal comparison."""
+        # Use Z3's signed comparison directly instead of _to_signed
+        return self._select(left <= right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLE64S(self, expr, left, right):
+        """Z3 implementation of signed 64-bit less-than-or-equal comparison."""
+        # Use Z3's signed comparison directly instead of _to_signed
+        return self._select(left <= right, self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLT32U(self, expr, left, right):
+        """Z3 implementation of unsigned 32-bit less-than comparison."""
+        return self._select(z3.ULT(left, right), self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLT64U(self, expr, left, right):
+        """Z3 implementation of unsigned 64-bit less-than comparison."""
+        return self._select(z3.ULT(left, right), self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLE32U(self, expr, left, right):
+        """Z3 implementation of unsigned 32-bit less-than-or-equal comparison."""
+        return self._select(z3.ULE(left, right), self.TRUE, self.FALSE)
+
+    def _binop_Iop_CmpLE64U(self, expr, left, right):
+        """Z3 implementation of unsigned 64-bit less-than-or-equal comparison."""
+        return self._select(z3.ULE(left, right), self.TRUE, self.FALSE)
+
     def _select(self, condition, then_expr, else_expr):
         """Z3 implementation of conditional selection."""
         # Use Z3's If for symbolic expressions

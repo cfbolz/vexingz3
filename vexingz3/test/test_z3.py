@@ -184,3 +184,145 @@ def test_cmp_cmovg_greater():
     # CMOVG moves when signed greater (rax > rbx)
     expected_rcx = z3.If(rax > rbx, rdx, rcx)
     assert_z3_equivalent(registers["rcx"], expected_rcx)
+
+
+# Tests for new comparison operations with Z3
+def test_cmp_eq8_z3():
+    """Test CmpEQ8 with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    # Test with symbolic values
+    left = z3.BitVec("left", 8)
+    right = z3.BitVec("right", 8)
+
+    result = state._binop_Iop_CmpEQ8(None, left, right)
+    expected = z3.If(left == right, state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_ne32_z3():
+    """Test CmpNE32 with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 32)
+    right = z3.BitVec("right", 32)
+
+    result = state._binop_Iop_CmpNE32(None, left, right)
+    expected = z3.If(left != right, state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_ne64_z3():
+    """Test CmpNE64 with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 64)
+    right = z3.BitVec("right", 64)
+
+    result = state._binop_Iop_CmpNE64(None, left, right)
+    expected = z3.If(left != right, state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_lt32s_z3():
+    """Test CmpLT32S with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 32)
+    right = z3.BitVec("right", 32)
+
+    result = state._binop_Iop_CmpLT32S(None, left, right)
+    expected = z3.If(left < right, state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_lt32u_z3():
+    """Test CmpLT32U with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 32)
+    right = z3.BitVec("right", 32)
+
+    result = state._binop_Iop_CmpLT32U(None, left, right)
+    expected = z3.If(z3.ULT(left, right), state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_lt64u_z3():
+    """Test CmpLT64U with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 64)
+    right = z3.BitVec("right", 64)
+
+    result = state._binop_Iop_CmpLT64U(None, left, right)
+    expected = z3.If(z3.ULT(left, right), state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_le32s_z3():
+    """Test CmpLE32S with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 32)
+    right = z3.BitVec("right", 32)
+
+    result = state._binop_Iop_CmpLE32S(None, left, right)
+    expected = z3.If(left <= right, state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_le32u_z3():
+    """Test CmpLE32U with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 32)
+    right = z3.BitVec("right", 32)
+
+    result = state._binop_Iop_CmpLE32U(None, left, right)
+    expected = z3.If(z3.ULE(left, right), state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_le64s_z3():
+    """Test CmpLE64S with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 64)
+    right = z3.BitVec("right", 64)
+
+    result = state._binop_Iop_CmpLE64S(None, left, right)
+    expected = z3.If(left <= right, state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
+
+
+def test_cmp_le64u_z3():
+    """Test CmpLE64U with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    left = z3.BitVec("left", 64)
+    right = z3.BitVec("right", 64)
+
+    result = state._binop_Iop_CmpLE64U(None, left, right)
+    expected = z3.If(z3.ULE(left, right), state.TRUE, state.FALSE)
+    assert_z3_equivalent(result, expected)
