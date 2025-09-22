@@ -4,6 +4,9 @@ from vexingz3 import interpreter
 
 
 class StateZ3(interpreter.State):
+    TRUE = z3.BitVecVal(1, 1)
+    FALSE = z3.BitVecVal(0, 1)
+
     def get_register(self, reg_name, bitwidth):
         return self.registers.get(reg_name, z3.BitVecVal(0, bitwidth))
 
@@ -127,3 +130,19 @@ class StateZ3(interpreter.State):
     def _eval_expr_Const(self, expr, arch):
         width = expr.result_size(self._current_irsb.tyenv)
         return z3.BitVecVal(expr.con.value, width)
+
+    def _binop_Iop_CmpLT64S(self, expr, left, right):
+        """Z3 implementation of signed 64-bit less-than comparison."""
+        # Use Z3's signed comparison directly instead of _to_signed
+        return self._select(left < right, self.TRUE, self.FALSE)
+
+    def _select(self, condition, then_expr, else_expr):
+        """Z3 implementation of conditional selection."""
+        # Use Z3's If for symbolic expressions
+        # Handle both boolean expressions and bitvector conditions
+        if hasattr(condition, "sort") and condition.sort().kind() == z3.Z3_BOOL_SORT:
+            # Condition is already a boolean
+            return z3.If(condition, then_expr, else_expr)
+        else:
+            # Condition is a bitvector, compare with 0
+            return z3.If(condition != 0, then_expr, else_expr)

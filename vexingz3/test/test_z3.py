@@ -162,3 +162,25 @@ def test_sar32_eax():
     eax = z3.Extract(31, 0, rax)
     expected = z3.ZeroExt(32, eax >> 4)
     assert_z3_equivalent(output_state[0]["rax"], expected)
+
+
+def test_cmp_cmovg_greater():
+    """Test CMP + CMOVG when first operand is greater"""
+    # cmp rax, rbx + cmovg rcx, rdx
+    # When rax > rbx, should move rdx to rcx
+    rax = z3.BitVec("rax_init", 64)
+    rbx = z3.BitVec("rbx_init", 64)
+    rcx = z3.BitVec("rcx_init", 64)
+    rdx = z3.BitVec("rdx_init", 64)
+
+    registers, memory = run("4839d8480f4fca", rax=rax, rbx=rbx, rcx=rcx, rdx=rdx)
+
+    # Other registers should remain unchanged
+    assert_z3_equivalent(registers["rax"], rax)
+    assert_z3_equivalent(registers["rbx"], rbx)
+    assert_z3_equivalent(registers["rdx"], rdx)
+
+    # rcx should conditionally receive rdx based on comparison result
+    # CMOVG moves when signed greater (rax > rbx)
+    expected_rcx = z3.If(rax > rbx, rdx, rcx)
+    assert_z3_equivalent(registers["rcx"], expected_rcx)

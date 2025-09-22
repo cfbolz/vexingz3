@@ -13,6 +13,9 @@ TYPE_TO_BITWIDTH = {
 
 
 class State:
+    TRUE = 1
+    FALSE = 0
+
     def __init__(self, registers=None, memory=None):
         self.registers = registers or {}
         self.temps = {}
@@ -235,10 +238,9 @@ class State:
     def _eval_expr_ITE(self, expr, arch):
         # If-Then-Else: condition ? then_expr : else_expr
         condition = self._eval_expression(expr.cond, arch)
-        if condition:
-            return self._eval_expression(expr.iftrue, arch)
-        else:
-            return self._eval_expression(expr.iffalse, arch)
+        then_expr = self._eval_expression(expr.iftrue, arch)
+        else_expr = self._eval_expression(expr.iffalse, arch)
+        return self._select(condition, then_expr, else_expr)
 
     def _eval_expr_Load(self, expr, arch):
         # LDle:I64(address) - load from memory
@@ -264,6 +266,13 @@ class State:
     def _from_signed(self, value, bitwidth):
         """Convert signed value to unsigned representation based on bit width."""
         return value if value >= 0 else value + (1 << bitwidth)
+
+    def _select(self, condition, then_expr, else_expr):
+        """Select between two expressions based on condition."""
+        if condition:
+            return then_expr
+        else:
+            return else_expr
 
     def _sign_extend(self, value, from_bitwidth, to_bitwidth):
         """Sign-extend value from one bit width to another."""
@@ -488,15 +497,15 @@ class State:
 
     def _binop_Iop_CmpNE8(self, expr, left, right):
         # Compare not equal: returns 1 if different, 0 if same
-        return 1 if left != right else 0
+        return self._select(left != right, self.TRUE, self.FALSE)
 
     def _binop_Iop_CmpEQ32(self, expr, left, right):
         # Compare equal: returns 1 if same, 0 if different
-        return 1 if left == right else 0
+        return self._select(left == right, self.TRUE, self.FALSE)
 
     def _binop_Iop_CmpEQ64(self, expr, left, right):
         # Compare equal: returns 1 if same, 0 if different
-        return 1 if left == right else 0
+        return self._select(left == right, self.TRUE, self.FALSE)
 
     def _binop_Iop_64HLto128(self, expr, left, right):
         # Combine high:low 64-bit values into 128-bit value
