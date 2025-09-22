@@ -949,11 +949,17 @@ class State:
     def _unop_Iop_8Uto16(self, expr, arg):
         return self._zero_extend(arg, 8, 16)
 
+    def _unop_Iop_8Uto32(self, expr, arg):
+        return self._zero_extend(arg, 8, 32)
+
     def _unop_Iop_16Sto32(self, expr, arg):
         return self._sign_extend(arg, 16, 32)  # Sign-extend 16 to 32
 
     def _unop_Iop_8Sto16(self, expr, arg):
         return self._sign_extend(arg, 8, 16)  # Sign-extend 8 to 16
+
+    def _unop_Iop_8Sto32(self, expr, arg):
+        return self._sign_extend(arg, 8, 32)  # Sign-extend 8 to 32
 
     def _unop_Iop_16to8(self, expr, arg):
         return self._extract(arg, 7, 0)  # Extract low 8 bits from 16
@@ -972,6 +978,9 @@ class State:
 
     def _unop_Iop_1Uto64(self, expr, arg):
         return self._zero_extend(arg, 1, 64)
+
+    def _unop_Iop_1Uto8(self, expr, arg):
+        return self._zero_extend(arg, 1, 8)
 
     def _unop_Iop_64to1(self, expr, arg):
         return self._extract(arg, 0, 0)  # Extract low 1 bit

@@ -1571,3 +1571,57 @@ def test_cmp_le64u():
 
     result = state._binop_Iop_CmpLE64U(None, 0xFFFFFFFFFFFFFFFF, 1)  # max_uint64 > 1
     assert result == 0
+
+
+# Tests for new unary extension operations
+def test_unop_8uto32():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test zero extension from 8 to 32 bits
+    result = state._unop_Iop_8Uto32(None, 0x42)
+    assert result == 0x42  # Should be zero-extended
+
+    # Test with 8-bit boundary value
+    result = state._unop_Iop_8Uto32(None, 0xFF)
+    assert result == 0xFF  # Should be 0x000000FF, not sign-extended
+
+    # Test with zero
+    result = state._unop_Iop_8Uto32(None, 0)
+    assert result == 0
+
+
+def test_unop_1uto8():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test zero extension from 1 to 8 bits
+    result = state._unop_Iop_1Uto8(None, 1)
+    assert result == 1  # Should be 0x01
+
+    result = state._unop_Iop_1Uto8(None, 0)
+    assert result == 0  # Should be 0x00
+
+
+def test_unop_8sto32():
+    from vexingz3.interpreter import State
+
+    state = State({}, {})
+
+    # Test sign extension from 8 to 32 bits - positive value
+    result = state._unop_Iop_8Sto32(None, 0x42)
+    assert result == 0x42  # Positive values should be zero-extended
+
+    # Test sign extension - negative value (8-bit)
+    result = state._unop_Iop_8Sto32(None, 0xFF)
+    assert result == 0xFFFFFFFF  # Should be sign-extended to -1
+
+    # Test sign extension - another negative value
+    result = state._unop_Iop_8Sto32(None, 0x80)
+    assert result == 0xFFFFFF80  # Should be sign-extended (128 -> -128)
+
+    # Test with zero
+    result = state._unop_Iop_8Sto32(None, 0)
+    assert result == 0

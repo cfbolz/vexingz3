@@ -326,3 +326,40 @@ def test_cmp_le64u_z3():
     result = state._binop_Iop_CmpLE64U(None, left, right)
     expected = z3.If(z3.ULE(left, right), state.TRUE, state.FALSE)
     assert_z3_equivalent(result, expected)
+
+
+# Tests for new unary extension operations with Z3
+def test_unop_8uto32_z3():
+    """Test 8Uto32 with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    arg = z3.BitVec("arg", 8)
+    result = state._unop_Iop_8Uto32(None, arg)
+    expected = z3.ZeroExt(24, arg)  # Zero-extend 8->32 (add 24 bits)
+    assert_z3_equivalent(result, expected)
+
+
+def test_unop_1uto8_z3():
+    """Test 1Uto8 with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    arg = z3.BitVec("arg", 1)
+    result = state._unop_Iop_1Uto8(None, arg)
+    expected = z3.ZeroExt(7, arg)  # Zero-extend 1->8 (add 7 bits)
+    assert_z3_equivalent(result, expected)
+
+
+def test_unop_8sto32_z3():
+    """Test 8Sto32 with Z3 symbolic values"""
+    from vexingz3.vexz3 import StateZ3
+
+    state = StateZ3({}, {})
+
+    arg = z3.BitVec("arg", 8)
+    result = state._unop_Iop_8Sto32(None, arg)
+    expected = z3.SignExt(24, arg)  # Sign-extend 8->32 (add 24 bits)
+    assert_z3_equivalent(result, expected)
