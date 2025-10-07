@@ -30,6 +30,6 @@ jobs:
       run: |
         pytest vexingz3/test/ -v
     
-    - name: Check import
+    - name: Check formatting
       run: |
-        python -c "from vexingz3.interpreter import interpret; print('Import successful')"
+        pre-commit run --all-files --show-diff-on-failure || git diff
