@@ -1054,6 +1054,8 @@ class State:
             count += 1
         return count
 
+    _unop_Iop_ClzNat64 = _unop_Iop_Clz64
+
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")
 
