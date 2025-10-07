@@ -202,8 +202,13 @@ class State:
         # GET:I64(rax) or GET:I8(offset=16) for al
         reg_name = arch.register_names.get(expr.offset)
         if reg_name:
+            (reg,) = [
+                r
+                for r in self._current_irsb.arch.register_list
+                if r.vex_offset == expr.offset
+            ]
+            reg_value = self.get_register(reg_name, reg.size * 8)
             bitwidth = TYPE_TO_BITWIDTH.get(expr.ty)
-            reg_value = self.get_register(reg_name, bitwidth)
             # Extract bits based on type
             if bitwidth:
                 return self._mask(reg_value, bitwidth)

@@ -39,7 +39,7 @@ the project are to write various tools to analyze VEX code. Right now there are 
 
 ## Virtual Environment
 
-The project uses a symlinked virtual environment located at `../2025-09-20-angr-vibe/venv/`.
+The project uses a symlinked virtual environment located at `venv/`.
 
 ## Notifications
 
