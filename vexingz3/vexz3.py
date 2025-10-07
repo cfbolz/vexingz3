@@ -217,3 +217,13 @@ class StateZ3(interpreter.State):
         else:
             # Condition is a bitvector, compare with 0
             return z3.If(condition != 0, then_expr, else_expr)
+
+    def _unop_Iop_Clz64(self, expr, arg):
+        """Z3 implementation of count leading zeros for 64-bit values."""
+        result = z3.BitVecVal(64, 64)
+        for i in range(0, 64):
+            bit = z3.Extract(i, i, arg)
+            result = z3.If(bit == 1, z3.BitVecVal(63 - i, 64), result)
+        return result
+
+    _unop_Iop_ClzNat64 = _unop_Iop_Clz64

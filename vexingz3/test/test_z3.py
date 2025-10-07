@@ -441,3 +441,31 @@ def test_riscv_load():
         ),
     )
     assert_z3_equivalent(registers["x17"], expected_x17)
+
+
+def test_clz64():
+    state = StateZ3({}, {})
+
+    assert_z3_equivalent(
+        state._unop_Iop_Clz64(None, z3.BitVecVal(0x8000000000000000, 64)),
+        z3.BitVecVal(0, 64),
+    )
+    assert_z3_equivalent(
+        state._unop_Iop_Clz64(None, z3.BitVecVal(0x0000000000000001, 64)),
+        z3.BitVecVal(63, 64),
+    )
+    assert_z3_equivalent(
+        state._unop_Iop_Clz64(None, z3.BitVecVal(0x0000000000000000, 64)),
+        z3.BitVecVal(64, 64),
+    )
+    assert_z3_equivalent(
+        state._unop_Iop_Clz64(None, z3.BitVecVal(0x0000000100000000, 64)),
+        z3.BitVecVal(31, 64),
+    )
+
+    x = z3.BitVec("x", 64)
+    result = state._unop_Iop_Clz64(None, x)
+    s = z3.Solver()
+    s.add(x == 0x00000000FFFFFFFF)
+    s.add(result == 32)
+    assert s.check() == z3.sat
