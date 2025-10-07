@@ -18,7 +18,7 @@ def run(instruction, memory=None, **initial_state):
     irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
     memory = memory if memory is not None else {}
 
-    state = StateZ3(initial_state.copy(), memory or {})
+    state = StateZ3(initial_state.copy(), memory)
     state.interpret(irsb)
     return state.registers, state.memory
 
@@ -391,3 +391,30 @@ def test_movq_rax_xmm0():
         z3.BitVecVal(0, 256 - 64), rax
     )  # 64 zero bits + 64 bits from RAX
     assert_z3_equivalent(registers["ymm0"], expected_ymm0)
+
+
+def test_memory_load_64bit():
+    # mov rax, [rbx] - load 64-bit value from memory
+    # Set up memory at address 0x1000 with value 0x123456789ABCDEF0
+    mem = z3.Array("mem", z3.BitVecSort(64), z3.BitVecSort(8))
+
+    registers, memory = run("488b03", rbx=z3.BitVecVal(0x1000, 64), memory=mem)
+    expected_rax = z3.Concat(
+        z3.Concat(
+            z3.Concat(
+                z3.Concat(
+                    z3.Concat(
+                        z3.Concat(
+                            z3.Concat(mem[4096 + 7], mem[4096 + 6]), mem[4096 + 5]
+                        ),
+                        mem[4096 + 4],
+                    ),
+                    mem[4096 + 3],
+                ),
+                mem[4096 + 2],
+            ),
+            mem[4096 + 1],
+        ),
+        mem[4096 + 0],
+    )
+    assert_z3_equivalent(registers["rax"], expected_rax)

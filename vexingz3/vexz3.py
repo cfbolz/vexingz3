@@ -10,6 +10,9 @@ class StateZ3(interpreter.State):
     def get_register(self, reg_name, bitwidth):
         return self.registers.get(reg_name, z3.BitVecVal(0, bitwidth))
 
+    def _read_byte(self, byte_addr):
+        return self.memory[byte_addr]
+
     def _mask(self, value, bitwidth):
         if value.sort().size() == bitwidth:
             return value

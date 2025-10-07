@@ -19,7 +19,7 @@ class State:
     def __init__(self, registers=None, memory=None):
         self.registers = registers or {}
         self.temps = {}
-        self.memory = memory or {}
+        self.memory = memory if memory is not None else {}
 
     def get_register(self, reg_name, bitwidth):
         return self.registers.get(reg_name, 0)
@@ -33,12 +33,18 @@ class State:
     def set_temp(self, temp_name, value):
         self.temps[temp_name] = value
 
+    def _read_byte(self, byte_addr):
+        import pdb
+
+        pdb.set_trace()
+        return self.memory.get(byte_addr, 0)
+
     def read_memory(self, address, size_bytes):
         """Read little-endian value from memory at given address."""
         bytes_values = []
         for i in range(size_bytes):
             byte_addr = address + i
-            byte_value = self.memory.get(byte_addr, 0)
+            byte_value = self._read_byte(byte_addr)
             bytes_values.append(byte_value)
         return self._concat_bits(bytes_values, 8)
 
