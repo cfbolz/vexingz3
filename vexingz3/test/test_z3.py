@@ -13,9 +13,9 @@ def assert_z3_equivalent(actual, expected):
     assert result == z3.unsat, f"Expressions not equivalent: {actual} != {expected}"
 
 
-def run(instruction, memory=None, **initial_state):
+def run(instruction, memory=None, arch=archinfo.ArchAMD64(), **initial_state):
     inp = bytes.fromhex(instruction)
-    irsb = pyvex.lift(inp, 0x400000, archinfo.ArchAMD64())
+    irsb = pyvex.lift(inp, 0x400000, arch)
     memory = memory if memory is not None else {}
 
     state = StateZ3(initial_state.copy(), memory)
@@ -418,3 +418,26 @@ def test_memory_load_64bit():
         mem[4096 + 0],
     )
     assert_z3_equivalent(registers["rax"], expected_rax)
+
+
+def test_riscv_load():
+    # load_x17_m120_x17
+    mem = z3.Array("mem", z3.BitVecSort(64), z3.BitVecSort(8))
+    x17 = z3.BitVec("x17", 64)
+    registers, memory = run(
+        "83 a8 88 f8", x17=x17, arch=archinfo.ArchRISCV64(), memory=mem
+    )
+    expected_x17 = z3.SignExt(
+        32,
+        z3.Concat(
+            z3.Concat(
+                z3.Concat(
+                    mem[x17 + 18446744073709551496 + 3],
+                    mem[x17 + 18446744073709551496 + 2],
+                ),
+                mem[x17 + 18446744073709551496 + 1],
+            ),
+            mem[x17 + 18446744073709551496 + 0],
+        ),
+    )
+    assert_z3_equivalent(registers["x17"], expected_x17)
