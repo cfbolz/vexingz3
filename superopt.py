@@ -184,29 +184,39 @@ class FakeOp:
 def find_inefficiency(ops):
     import random
 
-    values = [None] * len(ops)
-    interp = interpreter.State()
-    for i, op in enumerate(ops):
-        opname, restype, args = op
-        if opname == "var":
-            value = random.randrange(0, 2 ** TYPE_TO_BITWIDTH[restype])
-        elif len(args) == 1:
-            arg0 = values[args[0]]
-            value = getattr(interp, f"_unop_{opname}", interp._default_unop)(
-                FakeOp(opname, args), arg0
-            )
-        else:
-            assert len(args) == 2
-            arg0 = values[args[0]]
-            arg1 = values[args[1]]
-            value = getattr(interp, f"_binop_{opname}", interp._default_binop)(
-                FakeOp(opname, args), arg0, arg1
-            )
-        values[i] = value
-        print(i, op, value)
-        for j, op2 in enumerate(ops[:i]):
-            if values[i] == values[j]:
-                print("CANDIDATE", j)
+    all_values = []
+
+    for i in range(100):
+        values = [None] * len(ops)
+        interp = interpreter.State()
+        for i, op in enumerate(ops):
+            opname, restype, args = op
+            if opname == "var":
+                value = random.randrange(0, 2 ** TYPE_TO_BITWIDTH[restype])
+            elif len(args) == 1:
+                arg0 = values[args[0]]
+                value = getattr(interp, f"_unop_{opname}", interp._default_unop)(
+                    FakeOp(opname, args), arg0
+                )
+            else:
+                assert len(args) == 2
+                arg0 = values[args[0]]
+                arg1 = values[args[1]]
+                if "Shr" in opname or "Shl" in opname or "Sar" in opname:
+                    arg1 = min(arg1, 64)
+                value = getattr(interp, f"_binop_{opname}", interp._default_binop)(
+                    FakeOp(opname, args), arg0, arg1
+                )
+            values[i] = value
+        all_values.append(values)
+    if len({values[-1] for values in all_values}) == 1:
+        return True
+    for j in range(len(ops) - 1):
+        if ops[j][1] != restype:
+            continue
+        if all(values[i] == values[j] for values in all_values):
+            return True
+    return False
 
 
 def check_all_needed(ops, i1, i2):
@@ -336,33 +346,40 @@ def can_do_cse(ops):
 def main():
     c = Superopt()
     patterns = []
-    for num in range(2, 4):
-        print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", num)
-        for ops in c.generate(num):
-            if any_pattern_applies(ops, patterns):
-                continue
-            if can_do_cse(ops):
-                continue
-            try:
-                # find_inefficiency(ops)
-                res = find_inefficiency_z3(ops)
-                if res:
-                    a, b = res
-                    pattern = (ops, a, b)
-                    print(print_pattern(pattern))
-                    patterns.append(pattern)
-            except (NotImplementedError, AssertionError, z3.Z3Exception, TypeError):
-                import pdb
+    try:
+        for num in range(2, 6):
+            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", num)
+            for ops in c.generate(num):
+                if any_pattern_applies(ops, patterns):
+                    continue
+                if can_do_cse(ops):
+                    continue
+                if not find_inefficiency(ops):
+                    continue
+                # if not find_inefficiency(ops):
+                #    continue
+                try:
+                    # find_inefficiency(ops)
+                    res = find_inefficiency_z3(ops)
+                    if res:
+                        a, b = res
+                        pattern = (ops, a, b)
+                        print(print_pattern(pattern))
+                        patterns.append(pattern)
+                except (NotImplementedError, AssertionError, z3.Z3Exception, TypeError):
+                    import pdb
 
-                pdb.xpm()
-                print("nope", ops)
-                pass
-            except Exception:
-                import pdb
+                    pdb.xpm()
+                    print("nope", ops)
+                    pass
+                except Exception:
+                    import pdb
 
-                pdb.xpm()
-            # for i, op in enumerate(ops):
-            #    print(i, op)
+                    pdb.xpm()
+                # for i, op in enumerate(ops):
+                #    print(i, op)
+    finally:
+        print(len(patterns))
 
 
 main()

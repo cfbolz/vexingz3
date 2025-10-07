@@ -463,21 +463,21 @@ class State:
     def _binop_Iop_Shl64(self, expr, left, right):
         # Left shift: left << right, mask to 64 bits
         assert (
-            0 <= right <= 63
+            0 <= right <= 64
         ), f"Shift count {right} out of range [0, 63] for 64-bit shift"
         return self._mask(left << right, 64)
 
     def _binop_Iop_Shr64(self, expr, left, right):
         # Logical right shift: left >> right (zero fill from left)
         assert (
-            0 <= right <= 63
+            0 <= right <= 64
         ), f"Shift count {right} out of range [0, 63] for 64-bit shift"
         return self._mask(left >> right, 64)
 
     def _binop_Iop_Sar64(self, expr, left, right):
         # Arithmetic right shift: sign-extending right shift
         assert (
-            0 <= right <= 63
+            0 <= right <= 64
         ), f"Shift count {right} out of range [0, 63] for 64-bit shift"
         return self._arithmetic_right_shift(left, right, 64)
 

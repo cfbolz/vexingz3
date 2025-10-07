@@ -309,8 +309,8 @@ def test_shl64_invalid_shift_count():
     state = State()
 
     # Test invalid shift count > 63
-    with pytest.raises(AssertionError, match="Shift count 64 out of range"):
-        state._binop_Iop_Shl64(None, 0x100, 64)
+    with pytest.raises(AssertionError, match="Shift count 100 out of range"):
+        state._binop_Iop_Shl64(None, 0x100, 100)
 
     # Test negative shift count
     with pytest.raises(AssertionError, match="Shift count -1 out of range"):
