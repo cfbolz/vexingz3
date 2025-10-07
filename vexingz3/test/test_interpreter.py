@@ -1719,3 +1719,16 @@ def test_movq_integration():
         rax=0x123456789ABCDEF0,  # RAX unchanged
         ymm0=0x123456789ABCDEF0,  # Full 64 bits moved to YMM0, upper bits zeroed
     )
+
+
+def test_clz64():
+    from vexingz3.interpreter import State
+
+    state = State()
+
+    assert state._unop_Iop_Clz64(None, 0x8000000000000000) == 0
+    assert state._unop_Iop_Clz64(None, 0x0000000000000001) == 63
+    assert state._unop_Iop_Clz64(None, 0x0000000000000000) == 64
+    assert state._unop_Iop_Clz64(None, 0x0000000100000000) == 31
+    assert state._unop_Iop_Clz64(None, 0x00000000FFFFFFFF) == 32
+    assert state._unop_Iop_Clz64(None, 0xFFFFFFFFFFFFFFFF) == 0

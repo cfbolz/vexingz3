@@ -1044,6 +1044,16 @@ class State:
     def _unop_Iop_64UtoV128(self, expr, arg):
         return self._zero_extend(arg, 64, 128)
 
+    def _unop_Iop_Clz64(self, expr, arg):
+        if arg == 0:
+            return 64
+        count = 0
+        for i in range(63, -1, -1):
+            if arg & (1 << i):
+                break
+            count += 1
+        return count
+
     def _default_unop(self, expr, arg):
         raise NotImplementedError(f"Unop {expr.op} not implemented")
 
