@@ -924,6 +924,22 @@ class State:
         b1 = self._extract_packed_element(right, 32, 1)
         return self._concat_bits([a0, b0, a1, b1], 32)
 
+    def _binop_Iop_InterleaveLO64x2(self, expr, left, right):
+        # Interleave low 64-bit elements from two 128-bit vectors
+        # left = [a1, a0], right = [b1, b0]
+        # result = [b0, a0]
+        a0 = self._extract_packed_element(left, 64, 0)
+        b0 = self._extract_packed_element(right, 64, 0)
+        return self._concat_bits([a0, b0], 64)
+
+    def _binop_Iop_InterleaveHI64x2(self, expr, left, right):
+        # Interleave high 64-bit elements from two 128-bit vectors
+        # left = [a1, a0], right = [b1, b0]
+        # result = [b1, a1]
+        a1 = self._extract_packed_element(left, 64, 1)
+        b1 = self._extract_packed_element(right, 64, 1)
+        return self._concat_bits([a1, b1], 64)
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
 
