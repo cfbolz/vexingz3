@@ -101,6 +101,33 @@ class StateZ3(interpreter.State):
             right = z3.Extract(31, 0, right)
         return left >> right
 
+    def _binop_Iop_Shl16(self, expr, left, right):
+        """Z3 implementation of 16-bit left shift."""
+        # For Z3 expressions, ensure both operands have same bit width
+        if right.sort().size() < 16:
+            right = z3.ZeroExt(16 - right.sort().size(), right)
+        elif right.sort().size() > 16:
+            right = z3.Extract(31, 0, right)
+        return left << right
+
+    def _binop_Iop_Shr16(self, expr, left, right):
+        """Z3 implementation of 16-bit logical right shift."""
+        # For Z3 expressions, ensure both operands have same bit width
+        if right.sort().size() < 16:
+            right = z3.ZeroExt(16 - right.sort().size(), right)
+        elif right.sort().size() > 16:
+            right = z3.Extract(31, 0, right)
+        return z3.LShR(left, right)
+
+    def _binop_Iop_Sar16(self, expr, left, right):
+        """Z3 implementation of 16-bit arithmetic right shift."""
+        # For Z3 expressions, ensure both operands have same bit width
+        if right.sort().size() < 16:
+            right = z3.ZeroExt(16 - right.sort().size(), right)
+        elif right.sort().size() > 16:
+            right = z3.Extract(31, 0, right)
+        return left >> right
+
     def _check_expression_result_type(self, expr, res):
         # check that z3 bit vector sort is of the same size as the vex type says
         assert res.sort().size() == expr.result_size(self._current_irsb.tyenv)
