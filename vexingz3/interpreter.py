@@ -34,9 +34,6 @@ class State:
         self.temps[temp_name] = value
 
     def _read_byte(self, byte_addr):
-        import pdb
-
-        pdb.set_trace()
         return self.memory.get(byte_addr, 0)
 
     def read_memory(self, address, size_bytes):
