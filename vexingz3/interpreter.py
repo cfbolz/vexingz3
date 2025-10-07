@@ -914,6 +914,16 @@ class State:
             left, right, 32, 4, lambda v, s: self._arithmetic_right_shift(v, s, 32)
         )
 
+    def _binop_Iop_InterleaveLO32x4(self, expr, left, right):
+        # Interleave low 32-bit elements from two 128-bit vectors
+        # left = [a3, a2, a1, a0], right = [b3, b2, b1, b0]
+        # result = [b1, a1, b0, a0]
+        a0 = self._extract_packed_element(left, 32, 0)
+        a1 = self._extract_packed_element(left, 32, 1)
+        b0 = self._extract_packed_element(right, 32, 0)
+        b1 = self._extract_packed_element(right, 32, 1)
+        return self._concat_bits([a0, b0, a1, b1], 32)
+
     def _default_binop(self, expr, left, right):
         raise NotImplementedError(f"Binop {expr.op} not implemented")
 

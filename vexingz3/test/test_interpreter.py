@@ -1220,6 +1220,18 @@ def test_pmulld_32x4():
     assert result == expected
 
 
+def test_interleave_lo32x4():
+    from vexingz3.interpreter import State
+
+    state = State()
+    left = pack_integers([0x10, 0x20, 0x30, 0x40], 32)
+    right = pack_integers([0xA0, 0xB0, 0xC0, 0xD0], 32)
+    expected = pack_integers([0x10, 0xA0, 0x20, 0xB0], 32)
+
+    result = state._binop_Iop_InterleaveLO32x4(None, left, right)
+    assert result == expected
+
+
 def test_vpmullw_16x16():
     # vpmullw ymm0, ymm1, ymm2 - AVX2 packed multiply 16×16-bit integers
     # Test with alternating pattern
