@@ -278,7 +278,7 @@ class State:
 
     def _from_signed(self, value, bitwidth):
         """Convert signed value to unsigned representation based on bit width."""
-        return value if value >= 0 else value + (1 << bitwidth)
+        return value & ((1 << bitwidth) - 1)
 
     def _select(self, condition, then_expr, else_expr):
         """Select between two expressions based on condition."""
@@ -428,35 +428,35 @@ class State:
 
     def _binop_Iop_MullS8(self, expr, left, right):
         # Signed multiply: 8-bit * 8-bit -> 16-bit result
-        left_signed = self._to_signed(left, 8)
-        right_signed = self._to_signed(right, 8)
+        left_signed = self._sign_extend(left, 8, 16)
+        right_signed = self._sign_extend(right, 8, 16)
         result = left_signed * right_signed
         return self._from_signed(result, 16)
 
     def _binop_Iop_MullS16(self, expr, left, right):
         # Signed multiply: 16-bit * 16-bit -> 32-bit result
-        left_signed = self._to_signed(left, 16)
-        right_signed = self._to_signed(right, 16)
+        left_signed = self._sign_extend(left, 16, 32)
+        right_signed = self._sign_extend(right, 16, 32)
         result = left_signed * right_signed
         return self._from_signed(result, 32)
 
     def _binop_Iop_MullS32(self, expr, left, right):
         # Signed multiply: 32-bit * 32-bit -> 64-bit result
-        left_signed = self._to_signed(left, 32)
-        right_signed = self._to_signed(right, 32)
+        left_signed = self._sign_extend(left, 32, 64)
+        right_signed = self._sign_extend(right, 32, 64)
         result = left_signed * right_signed
         return self._from_signed(result, 64)
 
     def _binop_Iop_MullU64(self, expr, left, right):
         # Unsigned multiply: 64-bit * 64-bit -> 128-bit result
-        left_64 = self._mask(left, 64)
-        right_64 = self._mask(right, 64)
+        left_64 = self._zero_extend(left, 64, 128)
+        right_64 = self._zero_extend(right, 64, 128)
         return left_64 * right_64  # No need to mask, Python handles arbitrary precision
 
     def _binop_Iop_MullS64(self, expr, left, right):
         # Signed multiply: 64-bit * 64-bit -> 128-bit result
-        left_signed = self._to_signed(left, 64)
-        right_signed = self._to_signed(right, 64)
+        left_signed = self._sign_extend(left, 64, 128)
+        right_signed = self._sign_extend(right, 64, 128)
         result = left_signed * right_signed
         return self._from_signed(result, 128)
 
@@ -524,6 +524,10 @@ class State:
         # Compare equal: returns 1 if same, 0 if different
         return self._select(left == right, self.TRUE, self.FALSE)
 
+    def _binop_Iop_CmpEQ16(self, expr, left, right):
+        # Compare equal: returns 1 if same, 0 if different
+        return self._select(left == right, self.TRUE, self.FALSE)
+
     def _binop_Iop_CmpNE32(self, expr, left, right):
         # Compare not equal: returns 1 if different, 0 if same
         return self._select(left != right, self.TRUE, self.FALSE)
@@ -571,6 +575,8 @@ class State:
         high = self._mask(left, 64)
         low = self._mask(right, 64)
         return self._concat_bits([low, high], 64)
+
+    _binop_Iop_64HLtoV128 = _binop_Iop_64HLto128
 
     def _binop_Iop_32HLto64(self, expr, left, right):
         # Combine high:low 32-bit values into 64-bit value
@@ -938,8 +944,12 @@ class State:
     def _unop_Iop_128HIto64(self, expr, arg):
         return self._extract(arg, 127, 64)  # Extract high 64 bits from 128-bit value
 
+    _unop_Iop_V128HIto64 = _unop_Iop_128HIto64
+
     def _unop_Iop_128to64(self, expr, arg):
         return self._extract(arg, 63, 0)  # Extract low 64 bits from 128-bit value
+
+    _unop_Iop_V128to64 = _unop_Iop_128to64
 
     def _unop_Iop_64to16(self, expr, arg):
         return self._extract(arg, 15, 0)  # Extract low 16 bits
