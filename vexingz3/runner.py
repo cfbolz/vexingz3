@@ -29,16 +29,15 @@ def init_registers_blank(arch):
     return init_regs 
 
 def run_riscv64(opcodes, outfile):
-    byteorder =  "little"
     arch = archinfo.ArchRISCV64()
-
-    init_mem = z3.Array("memory", z3.BitVecSort(64), z3.BitVecSort(8))
-    init_regs = init_registers_blank(arch)
-
+    
     executions = []
 
     for code in opcodes:
-        mcode = code.to_bytes(4, byteorder)
+        init_mem = z3.Array("memory", z3.BitVecSort(64), z3.BitVecSort(8))
+        init_regs = init_registers_blank(arch)
+
+        mcode = code.to_bytes(4, "little")
         result_regs, result_mem = run(mcode, init_mem, arch, init_regs)
 
         init_regs_smt, init_memory_smt, res_regs_smt, res_memory_smt = extract_all_regs_mem(init_regs, init_mem,
