@@ -82,7 +82,7 @@ class Execution(object):
         code.append(pref + "_init_memory = '%s' " % str(self.init_memory))
         
         code.append(pref + "_result_reg_values = %s " % str(self.result_reg_values)),
-        code.append(pref + "_result_memory_values = '%s' " % str(self.result_memory_values))
+        code.append(pref + "_result_memory_values = '%s' " % str(self.result_memory_values).replace("\n", " "))
 
         code.append(pref + "_load_addr = %s " % str(self.load_addr))
         code.append(pref + "_Execution =  Execution(%s,%s,%s,%s,%s,%s,%s,%s)" 

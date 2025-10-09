@@ -9,6 +9,16 @@ class StateZ3(interpreter.State):
 
     def get_register(self, reg_name, bitwidth):
         return self.registers.get(reg_name, z3.BitVecVal(0, bitwidth))
+    
+    def write_memory(self, address, value, size_bytes):
+        """Write little-endian value to memory at given address."""
+        for i in range(size_bytes):
+            byte_addr = address + i
+            if isinstance(value, int):
+                byte_value = z3.BitVecVal((value >> (i * 8)) & 0xFF, 8)
+            else:
+                byte_value = z3.Extract(7 + i * 8, i * 8, value)
+            self.memory = z3.Store(self.memory, byte_addr, byte_value)
 
     def _read_byte(self, byte_addr):
         return self.memory[byte_addr]

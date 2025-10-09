@@ -1,5 +1,18 @@
 import os
+import tempfile
+import shutil
+import vexingz3
 from vexingz3.runner import run_riscv64
+
+#############################
+
+def load_executions(filename):
+    """ load 'executions' from file """
+    d = {}
+    eval(compile("from %s import executions" % filename, "<string>", 'exec'), d)
+    return d["executions"]
+
+#############################
 
 def test_dump_simple():
     code = [
@@ -12,32 +25,40 @@ def test_dump_simple():
         0x04d3e893, # ori  x17 x7 77 
     ]
       
-    file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_executions.py")
+    file = tempfile.NamedTemporaryFile(suffix=".py")
 
-    run_riscv64(code, file)
+    run_riscv64(code, file.name)
 
-    assert os.path.exists(file)
+    copyfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), str(file.name)[5:])
+    shutil.copy(file.name, copyfile)
 
-    from vexingz3.test.test_executions import executions
+    assert os.path.exists(file.name)
 
-    assert "test_executions.ArchRISCV64" in str(executions[0].arch.__class__)
+    executions = load_executions("vexingz3.test%s" % file.name.replace("/", ".")[4:-3])
+
+    assert ".ArchRISCV64" in str(executions[0].arch.__class__)
 
     for i, instr in enumerate(code):
         assert executions[i].code == [instr]
     
-    os.remove(file)
+    file.close()
+    os.remove(copyfile)
 
 def test_store():
     code = [0x0073a023] # sw x7 0(x7)
 
-    file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_executions.py")
+    file = tempfile.NamedTemporaryFile(suffix=".py")
 
-    run_riscv64(code, file)
+    run_riscv64(code, file.name)
 
-    assert os.path.exists(file)
+    copyfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), str(file.name)[5:])
+    shutil.copy(file.name, copyfile)
 
-    from vexingz3.test.test_executions import executions
+    assert os.path.exists(file.name)
 
-    assert "????" in executions[0].result_memory_values
+    executions = load_executions("vexingz3.test%s" % file.name.replace("/", ".")[4:-3])
 
-    os.remove(file)
+    assert "(store memory (bvadd x7 #x0000000000000000)" in " ".join(str(executions[0].result_memory_values).split())
+
+    file.close()
+    os.remove(copyfile)
