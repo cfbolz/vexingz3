@@ -2,6 +2,28 @@ import z3
 
 from vexingz3 import interpreter, vexz3
 
+
+class Operation:
+    def __init__(self, name, type, args):
+        self.name = name
+        self.type = type
+        self.args = args
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Operation)
+            and self.name == other.name
+            and self.type == other.type
+            and self.args == other.args
+        )
+
+    def __hash__(self):
+        return hash((self.name, self.type, tuple(self.args)))
+
+    def __repr__(self):
+        return f"Operation({self.name!r}, {self.type!r}, {self.args!r})"
+
+
 expr_types = {
     "Iop_Add64": ("Ity_I64", ["Ity_I64", "Ity_I64"]),
     "Iop_And64": ("Ity_I64", ["Ity_I64", "Ity_I64"]),
@@ -156,22 +178,21 @@ class Superopt:
         for prevops in self.generate(length - 1):
             for typ in TYPE_TO_BITWIDTH:
                 # add a var
-                yield prevops + [("var", typ, [])]
+                yield prevops + [Operation("var", typ, [])]
 
             for opname, (restype, argtyps) in exprs:
                 assert len(argtyps) in (1, 2)
                 if len(argtyps) == 1:
                     for arg0 in self.findarg(prevops, argtyps[0]):
-                        yield prevops + [(opname, restype, [arg0])]
+                        yield prevops + [Operation(opname, restype, [arg0])]
                 else:
                     for arg0 in self.findarg(prevops, argtyps[0]):
                         for arg1 in self.findarg(prevops, argtyps[1]):
-                            yield prevops + [(opname, restype, [arg0, arg1])]
+                            yield prevops + [Operation(opname, restype, [arg0, arg1])]
 
     def findarg(self, prevops, typ):
         for i, op in enumerate(prevops):
-            opname, restype, args = op
-            if restype == typ:
+            if op.type == typ:
                 yield i
 
 
@@ -186,33 +207,33 @@ def find_inefficiency(ops):
 
     all_values = []
 
-    for i in range(100):
+    for _ in range(100):
         values = [None] * len(ops)
         interp = interpreter.State()
         for i, op in enumerate(ops):
-            opname, restype, args = op
-            if opname == "var":
-                value = random.randrange(0, 2 ** TYPE_TO_BITWIDTH[restype])
-            elif len(args) == 1:
-                arg0 = values[args[0]]
-                value = getattr(interp, f"_unop_{opname}", interp._default_unop)(
-                    FakeOp(opname, args), arg0
+            if op.name == "var":
+                value = random.randrange(0, 2 ** TYPE_TO_BITWIDTH[op.type])
+            elif len(op.args) == 1:
+                arg0 = values[op.args[0]]
+                value = getattr(interp, f"_unop_{op.name}", interp._default_unop)(
+                    FakeOp(op.name, op.args), arg0
                 )
             else:
-                assert len(args) == 2
-                arg0 = values[args[0]]
-                arg1 = values[args[1]]
-                if "Shr" in opname or "Shl" in opname or "Sar" in opname:
+                assert len(op.args) == 2
+                arg0 = values[op.args[0]]
+                arg1 = values[op.args[1]]
+                if "Shr" in op.name or "Shl" in op.name or "Sar" in op.name:
                     arg1 = min(arg1, 64)
-                value = getattr(interp, f"_binop_{opname}", interp._default_binop)(
-                    FakeOp(opname, args), arg0, arg1
+                value = getattr(interp, f"_binop_{op.name}", interp._default_binop)(
+                    FakeOp(op.name, op.args), arg0, arg1
                 )
             values[i] = value
         all_values.append(values)
     if len({values[-1] for values in all_values}) == 1:
         return True
+    restype = ops[-1].type
     for j in range(len(ops) - 1):
-        if ops[j][1] != restype:
+        if ops[j].type != restype:
             continue
         if all(values[i] == values[j] for values in all_values):
             return True
@@ -224,8 +245,7 @@ def check_all_needed(ops, i1, i2):
     seen = {i1, i2}
     while indexes:
         i = indexes.pop()
-        opname, restype, args = ops[i]
-        for arg in args:
+        for arg in ops[i].args:
             if arg in seen:
                 continue
             indexes.add(arg)
@@ -240,26 +260,26 @@ def find_inefficiency_z3(ops):
     solver = z3.Solver()
     conds = []
     for i, op in enumerate(ops):
-        opname, restype, args = op
-        var = z3.BitVec(f"v{i}", TYPE_TO_BITWIDTH[restype])
+        var = z3.BitVec(f"v{i}", TYPE_TO_BITWIDTH[op.type])
         vars.append(var)
-        if opname == "var":
+        if op.name == "var":
             value = var
-        elif len(args) == 1:
-            arg0 = values[args[0]]
-            value = getattr(interp, f"_unop_{opname}", interp._default_unop)(
-                FakeOp(opname, args), arg0
+        elif len(op.args) == 1:
+            arg0 = values[op.args[0]]
+            value = getattr(interp, f"_unop_{op.name}", interp._default_unop)(
+                FakeOp(op.name, op.args), arg0
             )
         else:
-            assert len(args) == 2
-            arg0 = values[args[0]]
-            arg1 = values[args[1]]
-            value = getattr(interp, f"_binop_{opname}", interp._default_binop)(
-                FakeOp(opname, args), arg0, arg1
+            assert len(op.args) == 2
+            arg0 = values[op.args[0]]
+            arg1 = values[op.args[1]]
+            value = getattr(interp, f"_binop_{op.name}", interp._default_binop)(
+                FakeOp(op.name, op.args), arg0, arg1
             )
         conds.append(var == value)
         values[i] = value
     if check_all_needed(ops, i, i):
+        restype = ops[-1].type
         resconst = z3.BitVec(f"c{i}", TYPE_TO_BITWIDTH[restype])
         condition = z3.ForAll(vars, z3.Implies(z3.And(*conds), values[i] == resconst))
         res = solver.check(condition)
@@ -267,7 +287,7 @@ def find_inefficiency_z3(ops):
             constvalue = solver.model()[resconst].as_long()
             return ("const", constvalue)
     for j, op2 in enumerate(ops[:i]):
-        if ops[j][1] != restype:
+        if ops[j].type != ops[-1].type:
             continue
         if not check_all_needed(ops, i, j):
             continue
@@ -283,16 +303,16 @@ def pattern_applies(ops, pattern):
     def match(index, pattern_index):
         op = ops[index]
         patternop = patternops[pattern_index]
-        if patternop[0] == "var":
+        if patternop.name == "var":
             if pattern_index in bindings:
                 prevop = ops[bindings[pattern_index]]
                 return op == prevop  # syntactic equality only, could be improved
             else:
                 bindings[pattern_index] = index
                 return True
-        if op[0] != patternop[0]:
+        if op.name != patternop.name:
             return False
-        for arg_op_index, arg_pattern_index in zip(op[2], patternop[2]):
+        for arg_op_index, arg_pattern_index in zip(op.args, patternop.args):
             if not match(arg_op_index, arg_pattern_index):
                 return False
         return True
@@ -316,14 +336,14 @@ def print_pattern(pattern):
     bindings = {}
 
     def tostr(i):
-        opname, restype, args = pattern[i]
-        if opname == "var":
+        op = pattern[i]
+        if op.name == "var":
             if i in bindings:
                 return bindings[i]
-            bindings[i] = res = f"x{len(bindings)}"
-            return res
-        args = ", ".join(tostr(j) for j in args)
-        return f"{opname}({args})"
+            bindings[i] = varname = f"x{len(bindings)}"
+            return varname
+        args = ", ".join(tostr(j) for j in op.args)
+        return f"{op.name}({args})"
 
     if kind == "const":
         return f"{tostr(-1)} => {res}"
@@ -338,7 +358,7 @@ def can_do_cse(ops):
     for i in range(len(ops)):
         for j in range(i):
             op1 = ops[i]
-            if op1[0] == "var":
+            if op1.name == "var":
                 continue
             op2 = ops[j]
             if op1 == op2:
