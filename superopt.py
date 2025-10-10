@@ -272,6 +272,65 @@ def find_inefficiency_z3(ops):
             return ("prev", j)
 
 
+def find_inefficiency_z3_constants(ops):
+    values = [None] * len(ops)
+    vars = []
+    interp = vexz3.StateZ3()
+    solver = z3.Solver()
+    conds = []
+    for i, op in enumerate(ops):
+        var = z3.BitVec(f"v{i}", TYPE_TO_BITWIDTH[op.type])
+        vars.append(var)
+        if op.name == "var":
+            value = var
+        elif len(op.args) == 1:
+            arg0 = values[op.args[0]]
+            value = getattr(interp, f"_unop_{op.name}", interp._default_unop)(
+                FakeOp(op.name, op.args), arg0
+            )
+        else:
+            assert len(op.args) == 2
+            arg0 = values[op.args[0]]
+            arg1 = values[op.args[1]]
+            value = getattr(interp, f"_binop_{op.name}", interp._default_binop)(
+                FakeOp(op.name, op.args), arg0, arg1
+            )
+        conds.append(var == value)
+        values[i] = value
+    if ops == [
+        Operation("var", "Ity_I64"),
+        Operation("var", "Ity_I64"),
+        Operation("Iop_Add64", "Ity_I64", [0, 1]),
+    ]:
+        import pdb
+
+        pdb.set_trace()
+    for i, op in enumerate(ops):
+        # try to replace one variable with a constant
+        if op.name != "var":
+            continue
+        for j, op2 in enumerate(ops):
+            if j == len(ops) - 1:
+                continue
+            if i == j:
+                continue
+            if ops[j].type != ops[-1].type:
+                continue
+            restype = op.type
+            resconst = z3.BitVec(f"c{i}", TYPE_TO_BITWIDTH[restype])
+            condition = z3.ForAll(
+                vars,
+                z3.Implies(
+                    z3.And(*conds, values[i] == resconst), values[-1] == values[j]
+                ),
+            )
+            res = solver.check(condition)
+            if res == z3.sat:
+                constvalue = solver.model()[resconst].as_long()
+                print(ops, i, j, constvalue)
+                return ("const", constvalue)
+
+
 is_commutative = []
 for name, (typ, argtyps) in exprs:
     if len(argtyps) != 2:
@@ -380,12 +439,12 @@ def commutative_variants(pattern):
 
 
 def main():
-    c = Superopt()
+    s = Superopt()
     patterns = []
     try:
         for num in range(2, 5):
             print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", num)
-            for ops in c.generate(num):
+            for ops in s.generate(num):
                 if can_do_cse(ops):
                     continue
                 if any_pattern_applies(ops, patterns):
@@ -415,12 +474,7 @@ def main():
                         pdb.xpm()
                 elif sum(1 if op.name == "var" else 0 for op in ops) > 1:
                     # more than one variable
-                    import pdb
-
-                    pdb.set_trace()
-
-                # for i, op in enumerate(ops):
-                #    print(i, op)
+                    res = find_inefficiency_z3_constants(ops)
     finally:
         print(len(patterns))
 
