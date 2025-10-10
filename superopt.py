@@ -4,10 +4,13 @@ from vexingz3 import interpreter, vexz3
 
 
 class Operation:
-    def __init__(self, name, type, args):
+    def __init__(self, name, type, args=None):
         self.name = name
         self.type = type
-        self.args = args
+        self.args = args if args is not None else []
+
+    def is_commutative(self):
+        return self.name in is_commutative
 
     def __eq__(self, other):
         return (
@@ -140,36 +143,6 @@ for op in exprs:
     ops_by_res[restype].append(op)
 
 
-is_commutative = set(
-    """
-Iop_CmpEQ8
-Iop_CmpNE8
-Iop_CmpEQ16
-Iop_CmpEQ32
-Iop_CmpNE32
-Iop_CmpEQ64
-Iop_CmpNE64
-Iop_And8
-Iop_Or8
-Iop_And16
-Iop_Or16
-Iop_Add32
-Iop_And32
-Iop_Mul32
-Iop_Or32
-Iop_Xor32
-Iop_Add64
-Iop_And64
-Iop_Mul64
-Iop_Or64
-Iop_Xor64
-Iop_Add64x2
-Iop_AndV128
-Iop_OrV128
-""".strip().splitlines()
-)
-
-
 class Superopt:
     def generate(self, length):
         if length == 0:
@@ -279,6 +252,7 @@ def find_inefficiency_z3(ops):
         conds.append(var == value)
         values[i] = value
     if check_all_needed(ops, i, i):
+        # try to synthesize a constant for the result
         restype = ops[-1].type
         resconst = z3.BitVec(f"c{i}", TYPE_TO_BITWIDTH[restype])
         condition = z3.ForAll(vars, z3.Implies(z3.And(*conds), values[i] == resconst))
@@ -287,6 +261,7 @@ def find_inefficiency_z3(ops):
             constvalue = solver.model()[resconst].as_long()
             return ("const", constvalue)
     for j, op2 in enumerate(ops[:i]):
+        # try to check whether two operations produce the same value
         if ops[j].type != ops[-1].type:
             continue
         if not check_all_needed(ops, i, j):
@@ -295,6 +270,27 @@ def find_inefficiency_z3(ops):
         res = solver.check(z3.Not(z3.Implies(z3.And(*conds), values[i] == values[j])))
         if res == z3.unsat:
             return ("prev", j)
+
+
+is_commutative = []
+for name, (typ, argtyps) in exprs:
+    if len(argtyps) != 2:
+        continue
+    if argtyps[0] != argtyps[1]:
+        continue
+    ops = [
+        Operation("var", argtyps[0]),
+        Operation("var", argtyps[0]),
+        Operation(name, typ, [0, 1]),
+        Operation(name, typ, [1, 0]),
+    ]
+    res = find_inefficiency_z3(ops)
+    if res == ("prev", 2):
+        is_commutative.append(name)
+    elif res:
+        import pdb
+
+        pdb.set_trace()
 
 
 def pattern_applies(ops, pattern):
@@ -366,6 +362,23 @@ def can_do_cse(ops):
     return False
 
 
+def commutative_variants(pattern):
+    patternops, kind, res = pattern
+
+    def _commutative_variants(patternops):
+        if not patternops:
+            yield []
+            return
+        op = patternops[0]
+        for tail in _commutative_variants(patternops[1:]):
+            yield [op] + tail
+            if op.is_commutative() and op.args[0] != op.args[1]:
+                yield [Operation(op.name, op.type, op.args[::-1])] + tail
+
+    for ops in _commutative_variants(patternops):
+        yield ops, kind, res
+
+
 def main():
     c = Superopt()
     patterns = []
@@ -377,25 +390,35 @@ def main():
                     continue
                 if any_pattern_applies(ops, patterns):
                     continue
-                if not find_inefficiency(ops):
-                    continue
-                try:
-                    res = find_inefficiency_z3(ops)
-                    if res:
-                        a, b = res
-                        pattern = (ops, a, b)
-                        print(print_pattern(pattern))
-                        patterns.append(pattern)
-                except (NotImplementedError, AssertionError, z3.Z3Exception, TypeError):
+                if find_inefficiency(ops):
+                    try:
+                        res = find_inefficiency_z3(ops)
+                        if res:
+                            a, b = res
+                            pattern = (ops, a, b)
+                            print(print_pattern(pattern))
+                            patterns.extend(commutative_variants(pattern))
+                    except (
+                        NotImplementedError,
+                        AssertionError,
+                        z3.Z3Exception,
+                        TypeError,
+                    ):
+                        import pdb
+
+                        pdb.xpm()
+                        print("nope", ops)
+                        pass
+                    except Exception:
+                        import pdb
+
+                        pdb.xpm()
+                elif sum(1 if op.name == "var" else 0 for op in ops) > 1:
+                    # more than one variable
                     import pdb
 
-                    pdb.xpm()
-                    print("nope", ops)
-                    pass
-                except Exception:
-                    import pdb
+                    pdb.set_trace()
 
-                    pdb.xpm()
                 # for i, op in enumerate(ops):
                 #    print(i, op)
     finally:
