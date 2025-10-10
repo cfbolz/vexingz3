@@ -152,16 +152,35 @@ class Superopt:
             for typ in TYPE_TO_BITWIDTH:
                 # add a var
                 yield prevops + [Operation("var", typ, [])]
+            if any(op.name == "var" for op in prevops):
+                # add a const, if we have at least one var already
+                for typ in TYPE_TO_BITWIDTH:
+                    yield prevops + [Operation("const", typ, [])]
 
             for opname, (restype, argtyps) in exprs:
                 assert len(argtyps) in (1, 2)
                 if len(argtyps) == 1:
                     for arg0 in self.findarg(prevops, argtyps[0]):
+                        if prevops[arg0].name == "const":
+                            # constfolding, boring
+                            continue
                         yield prevops + [Operation(opname, restype, [arg0])]
                 else:
+                    seen_args = set()
                     for arg0 in self.findarg(prevops, argtyps[0]):
                         for arg1 in self.findarg(prevops, argtyps[1]):
-                            yield prevops + [Operation(opname, restype, [arg0, arg1])]
+                            if (
+                                prevops[arg0].name == "const"
+                                and prevops[arg1].name == "const"
+                            ):
+                                # constfolding, boring
+                                continue
+                            op = Operation(opname, restype, [arg0, arg1])
+                            if op.is_commutative():
+                                if (arg1, arg0) in seen_args:
+                                    continue
+                                seen_args.add((arg0, arg1))
+                            yield prevops + [op]
 
     def findarg(self, prevops, typ):
         for i, op in enumerate(prevops):
@@ -169,16 +188,12 @@ class Superopt:
                 yield i
 
 
-class FakeOp:
-    def __init__(self, opname, args):
-        self.op = opname
-        self.args = args
-
-
 def find_inefficiency(ops):
     import random
 
     all_values = []
+    if any(op.name == "const" for op in ops):
+        return True  # can't randomly synthesize consts
 
     for _ in range(100):
         values = [None] * len(ops)
@@ -189,7 +204,7 @@ def find_inefficiency(ops):
             elif len(op.args) == 1:
                 arg0 = values[op.args[0]]
                 value = getattr(interp, f"_unop_{op.name}", interp._default_unop)(
-                    FakeOp(op.name, op.args), arg0
+                    op, arg0
                 )
             else:
                 assert len(op.args) == 2
@@ -198,7 +213,7 @@ def find_inefficiency(ops):
                 if "Shr" in op.name or "Shl" in op.name or "Sar" in op.name:
                     arg1 = min(arg1, 64)
                 value = getattr(interp, f"_binop_{op.name}", interp._default_binop)(
-                    FakeOp(op.name, op.args), arg0, arg1
+                    op, arg0, arg1
                 )
             values[i] = value
         all_values.append(values)
@@ -232,34 +247,29 @@ def find_inefficiency_z3(ops):
     interp = vexz3.StateZ3()
     solver = z3.Solver()
     conds = []
+    consts = []
     for i, op in enumerate(ops):
+        if op.name == "const":
+            const = z3.BitVec(f"c{i}", TYPE_TO_BITWIDTH[op.type])
+            consts.append((const, i))
+            values[i] = const
+            continue
         var = z3.BitVec(f"v{i}", TYPE_TO_BITWIDTH[op.type])
         vars.append(var)
         if op.name == "var":
             value = var
         elif len(op.args) == 1:
             arg0 = values[op.args[0]]
-            value = getattr(interp, f"_unop_{op.name}", interp._default_unop)(
-                FakeOp(op.name, op.args), arg0
-            )
+            value = getattr(interp, f"_unop_{op.name}", interp._default_unop)(op, arg0)
         else:
             assert len(op.args) == 2
             arg0 = values[op.args[0]]
             arg1 = values[op.args[1]]
             value = getattr(interp, f"_binop_{op.name}", interp._default_binop)(
-                FakeOp(op.name, op.args), arg0, arg1
+                op, arg0, arg1
             )
         conds.append(var == value)
         values[i] = value
-    if check_all_needed(ops, i, i):
-        # try to synthesize a constant for the result
-        restype = ops[-1].type
-        resconst = z3.BitVec(f"c{i}", TYPE_TO_BITWIDTH[restype])
-        condition = z3.ForAll(vars, z3.Implies(z3.And(*conds), values[i] == resconst))
-        res = solver.check(condition)
-        if res == z3.sat:
-            constvalue = solver.model()[resconst].as_long()
-            return ("const", constvalue)
     for j, op2 in enumerate(ops[:i]):
         # try to check whether two operations produce the same value
         if ops[j].type != ops[-1].type:
@@ -267,68 +277,19 @@ def find_inefficiency_z3(ops):
         if not check_all_needed(ops, i, j):
             continue
         # check for equality to earlier op
-        res = solver.check(z3.Not(z3.Implies(z3.And(*conds), values[i] == values[j])))
-        if res == z3.unsat:
+        condition = z3.ForAll(
+            vars,
+            z3.Implies(z3.And(*conds), values[-1] == values[j]),
+        )
+        res = solver.check(condition)
+        if res == z3.sat:
+            if consts:
+                model = solver.model()
+                for const, index in consts:
+                    if model[const] is None:
+                        return None  # TODO: no idea!
+                    ops[index].const_value = model[const].as_long()
             return ("prev", j)
-
-
-def find_inefficiency_z3_constants(ops):
-    values = [None] * len(ops)
-    vars = []
-    interp = vexz3.StateZ3()
-    solver = z3.Solver()
-    conds = []
-    for i, op in enumerate(ops):
-        var = z3.BitVec(f"v{i}", TYPE_TO_BITWIDTH[op.type])
-        vars.append(var)
-        if op.name == "var":
-            value = var
-        elif len(op.args) == 1:
-            arg0 = values[op.args[0]]
-            value = getattr(interp, f"_unop_{op.name}", interp._default_unop)(
-                FakeOp(op.name, op.args), arg0
-            )
-        else:
-            assert len(op.args) == 2
-            arg0 = values[op.args[0]]
-            arg1 = values[op.args[1]]
-            value = getattr(interp, f"_binop_{op.name}", interp._default_binop)(
-                FakeOp(op.name, op.args), arg0, arg1
-            )
-        conds.append(var == value)
-        values[i] = value
-    if ops == [
-        Operation("var", "Ity_I64"),
-        Operation("var", "Ity_I64"),
-        Operation("Iop_Add64", "Ity_I64", [0, 1]),
-    ]:
-        import pdb
-
-        pdb.set_trace()
-    for i, op in enumerate(ops):
-        # try to replace one variable with a constant
-        if op.name != "var":
-            continue
-        for j, op2 in enumerate(ops):
-            if j == len(ops) - 1:
-                continue
-            if i == j:
-                continue
-            if ops[j].type != ops[-1].type:
-                continue
-            restype = op.type
-            resconst = z3.BitVec(f"c{i}", TYPE_TO_BITWIDTH[restype])
-            condition = z3.ForAll(
-                vars,
-                z3.Implies(
-                    z3.And(*conds, values[i] == resconst), values[-1] == values[j]
-                ),
-            )
-            res = solver.check(condition)
-            if res == z3.sat:
-                constvalue = solver.model()[resconst].as_long()
-                print(ops, i, j, constvalue)
-                return ("const", constvalue)
 
 
 is_commutative = []
@@ -397,6 +358,8 @@ def print_pattern(pattern):
                 return bindings[i]
             bindings[i] = varname = f"x{len(bindings)}"
             return varname
+        if op.name == "const":
+            return str(op.const_value)
         args = ", ".join(tostr(j) for j in op.args)
         return f"{op.name}({args})"
 
@@ -442,7 +405,7 @@ def main():
     s = Superopt()
     patterns = []
     try:
-        for num in range(2, 5):
+        for num in range(2, 6):
             print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", num)
             for ops in s.generate(num):
                 if can_do_cse(ops):
@@ -472,9 +435,6 @@ def main():
                         import pdb
 
                         pdb.xpm()
-                elif sum(1 if op.name == "var" else 0 for op in ops) > 1:
-                    # more than one variable
-                    res = find_inefficiency_z3_constants(ops)
     finally:
         print(len(patterns))
 
