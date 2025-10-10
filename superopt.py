@@ -35,7 +35,7 @@ expr_types = {
     "Iop_1Uto8": ("Ity_I8", ["Ity_I1"]),
     "Iop_64UtoV128": ("Ity_V128", ["Ity_I64"]),
     "Iop_CmpNE64": ("Ity_I1", ["Ity_I64", "Ity_I64"]),
-    #    "Iop_InterleaveLO64x2": ("Ity_V128", ["Ity_V128", "Ity_V128"]),
+    "Iop_InterleaveLO64x2": ("Ity_V128", ["Ity_V128", "Ity_V128"]),
     "Iop_Sar64": ("Ity_I64", ["Ity_I64", "Ity_I8"]),
     "Iop_Or32": ("Ity_I32", ["Ity_I32", "Ity_I32"]),
     "Iop_CmpLE64S": ("Ity_I1", ["Ity_I64", "Ity_I64"]),
@@ -55,7 +55,7 @@ expr_types = {
     "Iop_Xor32": ("Ity_I32", ["Ity_I32", "Ity_I32"]),
     "Iop_CmpNE8": ("Ity_I1", ["Ity_I8", "Ity_I8"]),
     "Iop_32UtoV128": ("Ity_V128", ["Ity_I32"]),
-    # "Iop_InterleaveLO32x4": ("Ity_V128", ["Ity_V128", "Ity_V128"]),
+    "Iop_InterleaveLO32x4": ("Ity_V128", ["Ity_V128", "Ity_V128"]),
     "Iop_16Sto32": ("Ity_I32", ["Ity_I16"]),
     "Iop_8Sto64": ("Ity_I64", ["Ity_I8"]),
     "Iop_CmpLT64S": ("Ity_I1", ["Ity_I64", "Ity_I64"]),
@@ -73,13 +73,13 @@ expr_types = {
     "Iop_64to16": ("Ity_I16", ["Ity_I64"]),
     "Iop_CmpEQ16": ("Ity_I1", ["Ity_I16", "Ity_I16"]),
     #    "Iop_ExpCmpNE64": ("Ity_I1", ["Ity_I64", "Ity_I64"]),
-    #    "Iop_Clz64": ("Ity_I64", ["Ity_I64"]),
+    "Iop_Clz64": ("Ity_I64", ["Ity_I64"]),
     "Iop_Not64": ("Ity_I64", ["Ity_I64"]),
     #    "Iop_DivModU128to64": ("Ity_I128", ["Ity_I128", "Ity_I64"]),
     "Iop_16Sto64": ("Ity_I64", ["Ity_I16"]),
     "Iop_And16": ("Ity_I16", ["Ity_I16", "Ity_I16"]),
     "Iop_Add64x2": ("Ity_V128", ["Ity_V128", "Ity_V128"]),
-    #    "Iop_InterleaveHI64x2": ("Ity_V128", ["Ity_V128", "Ity_V128"]),
+    "Iop_InterleaveHI64x2": ("Ity_V128", ["Ity_V128", "Ity_V128"]),
     "Iop_V128HIto64": ("Ity_I64", ["Ity_V128"]),
     "Iop_V128to64": ("Ity_I64", ["Ity_V128"]),
     "Iop_64HLtoV128": ("Ity_V128", ["Ity_I64", "Ity_I64"]),
@@ -154,7 +154,7 @@ class Superopt:
             yield []
             return
         for prevops in self.generate(length - 1):
-            for typ in ops_by_res:
+            for typ in TYPE_TO_BITWIDTH:
                 # add a var
                 yield prevops + [("var", typ, [])]
 
@@ -285,7 +285,8 @@ def pattern_applies(ops, pattern):
         patternop = patternops[pattern_index]
         if patternop[0] == "var":
             if pattern_index in bindings:
-                return bindings[pattern_index] == index
+                prevop = ops[bindings[pattern_index]]
+                return op == prevop  # syntactic equality only, could be improved
             else:
                 bindings[pattern_index] = index
                 return True
@@ -337,6 +338,8 @@ def can_do_cse(ops):
     for i in range(len(ops)):
         for j in range(i):
             op1 = ops[i]
+            if op1[0] == "var":
+                continue
             op2 = ops[j]
             if op1 == op2:
                 return True
@@ -347,19 +350,16 @@ def main():
     c = Superopt()
     patterns = []
     try:
-        for num in range(2, 6):
+        for num in range(2, 5):
             print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", num)
             for ops in c.generate(num):
-                if any_pattern_applies(ops, patterns):
-                    continue
                 if can_do_cse(ops):
+                    continue
+                if any_pattern_applies(ops, patterns):
                     continue
                 if not find_inefficiency(ops):
                     continue
-                # if not find_inefficiency(ops):
-                #    continue
                 try:
-                    # find_inefficiency(ops)
                     res = find_inefficiency_z3(ops)
                     if res:
                         a, b = res
