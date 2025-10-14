@@ -149,43 +149,37 @@ class Superopt:
             yield []
             return
         for prevops in self.generate(length - 1):
-            for typ in TYPE_TO_BITWIDTH:
-                # add a var
-                yield prevops + [Operation("var", typ, [])]
-            if any(op.name == "var" for op in prevops):
-                # add a const, if we have at least one var already
-                for typ in TYPE_TO_BITWIDTH:
-                    yield prevops + [Operation("const", typ, [])]
-
             for opname, (restype, argtyps) in exprs:
                 assert len(argtyps) in (1, 2)
                 if len(argtyps) == 1:
-                    for arg0 in self.findarg(prevops, argtyps[0]):
-                        if prevops[arg0].name == "const":
-                            # constfolding, boring
-                            continue
-                        yield prevops + [Operation(opname, restype, [arg0])]
+                    for arg0, extraops in self.findarg(prevops, argtyps[0]):
+                        yield prevops + extraops + [Operation(opname, restype, [arg0])]
                 else:
                     seen_args = set()
-                    for arg0 in self.findarg(prevops, argtyps[0]):
-                        for arg1 in self.findarg(prevops, argtyps[1]):
-                            if (
-                                prevops[arg0].name == "const"
-                                and prevops[arg1].name == "const"
-                            ):
-                                # constfolding, boring
-                                continue
+                    for arg0, extraops1 in self.findarg(
+                        prevops, argtyps[0], can_have_const=True
+                    ):
+                        prevops1 = prevops + extraops1
+                        is_const = prevops1[arg0].name == "const"
+                        for arg1, extraops2 in self.findarg(
+                            prevops + extraops1, argtyps[1], can_have_const=not is_const
+                        ):
                             op = Operation(opname, restype, [arg0, arg1])
                             if op.is_commutative():
                                 if (arg1, arg0) in seen_args:
                                     continue
                                 seen_args.add((arg0, arg1))
-                            yield prevops + [op]
+                            yield prevops1 + extraops2 + [op]
 
-    def findarg(self, prevops, typ):
+    def findarg(self, prevops, typ, can_have_const=False):
         for i, op in enumerate(prevops):
             if op.type == typ:
-                yield i
+                yield i, []
+        var = Operation("var", typ, [])
+        yield len(prevops), [var]
+        if can_have_const:
+            const = Operation("const", typ, [])
+            yield len(prevops), [const]
 
 
 def find_inefficiency(ops):
@@ -405,7 +399,7 @@ def main():
     s = Superopt()
     patterns = []
     try:
-        for num in range(2, 6):
+        for num in range(1, 3):
             print("+++++++++++++++++++++++++++++++++++++++++++++++++++++", num)
             for ops in s.generate(num):
                 if can_do_cse(ops):
